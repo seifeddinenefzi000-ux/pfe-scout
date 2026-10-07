@@ -13,9 +13,8 @@ export class SourceRepository {
         .eq('is_active', true);
 
       if (error) {
-        logger.error('Failed to fetch active sources', { error: error.message });
-        return [];
-      }
+  throw new Error(`Failed to fetch active sources: ${error.message}`);
+}
 
       return (data || []).map((row: Record<string, any>) => ({
         id: row.id,
