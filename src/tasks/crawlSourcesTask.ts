@@ -1,4 +1,5 @@
 import { task } from '@trigger.dev/sdk/v3';
+import { registerPlugins } from '../plugins/registerPlugins.js';
 
 import { pluginRegistry } from '../plugins/PluginRegistry.js';
 import { SourceRepository } from '../repositories/SourceRepository.js';
