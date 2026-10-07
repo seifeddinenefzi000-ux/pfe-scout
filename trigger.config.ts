@@ -2,7 +2,7 @@ import { defineConfig } from "@trigger.dev/sdk";
 
 export default defineConfig({
   project: "pfe-scout-0YWn",
-  runtime: "node",
+  runtime: "node-22",
   logLevel: "log",
   maxDuration: 3600,
   retries: {
