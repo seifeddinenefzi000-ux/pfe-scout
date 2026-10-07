@@ -1,5 +1,4 @@
 import { CanonicalInternship, ResumeData } from '../models/DomainModels.js';
-import { geminiService } from './GeminiService.js';
 import { logger } from '../utils/logger.js';
 
 export interface MatchEvaluationResult {
@@ -11,10 +10,24 @@ export interface MatchEvaluationResult {
 }
 
 export class MatchingEngine {
-  async evaluateMatch(internship: CanonicalInternship, resume: ResumeData): Promise<MatchEvaluationResult> {
+  async evaluateMatch(
+    internship: CanonicalInternship,
+    resume: ResumeData
+  ): Promise<MatchEvaluationResult> {
+
+    // ------------------------------------------------------------
+    // 1. RESUME VALIDATION
+    // ------------------------------------------------------------
+
     if (!resume || !resume.isParsedSuccessfully) {
-      const reason = resume?.parseErrorReason || 'Resume unavailable (Missing resume.pdf file)';
-      logger.warn(`Resume matching skipped: ${reason}`);
+      const reason =
+        resume?.parseErrorReason ||
+        'Resume unavailable';
+
+      logger.warn(
+        `Resume matching skipped: ${reason}`
+      );
+
       return {
         score: 0,
         skillMatchScore: 0,
@@ -24,52 +37,189 @@ export class MatchingEngine {
       };
     }
 
-    const resumeSkills = new Set(resume.skills.map((s) => s.toLowerCase()));
-    const jobSkills = internship.skills.map((s) => s.toLowerCase());
 
-    // 1. Skill Sub-Match
+    // ------------------------------------------------------------
+    // 2. SKILL MATCHING
+    // ------------------------------------------------------------
+
+    const resumeSkills = new Set(
+      resume.skills.map((skill) =>
+        skill.toLowerCase().trim()
+      )
+    );
+
+    const jobSkills = internship.skills.map((skill) =>
+      skill.toLowerCase().trim()
+    );
+
     let matchedSkillsCount = 0;
+
     if (jobSkills.length > 0) {
-      jobSkills.forEach((skill) => {
-        if (resumeSkills.has(skill)) matchedSkillsCount++;
-      });
+
+      for (const skill of jobSkills) {
+        if (resumeSkills.has(skill)) {
+          matchedSkillsCount++;
+        }
+      }
+
     } else {
-      const descLower = internship.description.toLowerCase();
-      resumeSkills.forEach((skill) => {
-        if (descLower.includes(skill)) matchedSkillsCount++;
-      });
+
+      const description =
+        internship.description.toLowerCase();
+
+      for (const skill of resumeSkills) {
+        if (description.includes(skill)) {
+          matchedSkillsCount++;
+        }
+      }
     }
+
 
     const skillMatchScore = Math.min(
       100,
-      Math.round((matchedSkillsCount / Math.max(1, jobSkills.length || 5)) * 100)
+      Math.round(
+        (
+          matchedSkillsCount /
+          Math.max(1, jobSkills.length || 5)
+        ) * 100
+      )
     );
 
-    // 2. Project Sub-Match
-    let projectMatchScore = 70;
+
+    // ------------------------------------------------------------
+    // 3. PROJECT MATCHING
+    // ------------------------------------------------------------
+
+    let projectMatchScore = 50;
+
     if (resume.projects.length > 0) {
-      const projTechs = new Set(resume.projects.flatMap((p) => p.technologies.map((t) => t.toLowerCase())));
-      let projMatched = 0;
-      jobSkills.forEach((s) => {
-        if (projTechs.has(s)) projMatched++;
-      });
-      projectMatchScore = Math.min(100, Math.round((projMatched / Math.max(1, jobSkills.length)) * 100) + 50);
+
+      const projectTechnologies =
+        new Set(
+          resume.projects.flatMap(
+            (project) =>
+              project.technologies.map(
+                (technology) =>
+                  technology.toLowerCase().trim()
+              )
+          )
+        );
+
+      let matchedProjectTechnologies = 0;
+
+      for (const skill of jobSkills) {
+        if (projectTechnologies.has(skill)) {
+          matchedProjectTechnologies++;
+        }
+      }
+
+      if (jobSkills.length > 0) {
+
+        projectMatchScore = Math.min(
+          100,
+          Math.round(
+            (
+              matchedProjectTechnologies /
+              jobSkills.length
+            ) * 100
+          )
+        );
+
+      } else {
+
+        projectMatchScore = 60;
+      }
     }
 
-    // 3. Education Sub-Match
-    let educationMatchScore = 80;
+
+    // ------------------------------------------------------------
+    // 4. EDUCATION MATCHING
+    // ------------------------------------------------------------
+
+    /*
+     * IMPORTANT:
+     *
+     * This replaces the original India-specific logic:
+     *
+     *   IIT
+     *   Tier-1
+     *   B.E.
+     *
+     * PFE Scout is now international.
+     */
+
+    let educationMatchScore = 70;
+
     if (resume.education.length > 0) {
-      const edu = resume.education[0];
-      if (edu.institution.includes('IIT') || edu.institution.includes('Tier-1')) educationMatchScore = 95;
-      else if (edu.degree.includes('Tech') || edu.degree.includes('B.E.')) educationMatchScore = 85;
+
+      const educationText =
+        resume.education
+          .map((education) =>
+            [
+              education.degree,
+              education.fieldOfStudy,
+              education.institution,
+            ]
+              .filter(Boolean)
+              .join(' ')
+              .toLowerCase()
+          )
+          .join(' ');
+
+      const energyKeywords = [
+        'energy',
+        'energetic',
+        'renewable',
+        'electrical',
+        'mechanical',
+        'thermal',
+        'thermodynamic',
+        'power',
+        'engineering',
+        'physics',
+        'environment',
+        'sustainability',
+      ];
+
+      const matchedEducationKeywords =
+        energyKeywords.filter((keyword) =>
+          educationText.includes(keyword)
+        ).length;
+
+      if (matchedEducationKeywords >= 3) {
+        educationMatchScore = 95;
+      } else if (matchedEducationKeywords >= 2) {
+        educationMatchScore = 90;
+      } else if (matchedEducationKeywords >= 1) {
+        educationMatchScore = 85;
+      } else {
+        educationMatchScore = 70;
+      }
     }
 
-    // 4. Overall Formula
-    const overallMatchScore = Math.round(
-      skillMatchScore * 0.60 + projectMatchScore * 0.25 + educationMatchScore * 0.15
-    );
 
-    const explanation = `Skill Match: ${skillMatchScore}% (${matchedSkillsCount} skills matched) | Project Match: ${projectMatchScore}% | Edu Match: ${educationMatchScore}%.`;
+    // ------------------------------------------------------------
+    // 5. OVERALL MATCH SCORE
+    // ------------------------------------------------------------
+
+    const overallMatchScore =
+      Math.round(
+        skillMatchScore * 0.60 +
+        projectMatchScore * 0.25 +
+        educationMatchScore * 0.15
+      );
+
+
+    // ------------------------------------------------------------
+    // 6. EXPLANATION
+    // ------------------------------------------------------------
+
+    const explanation =
+      `Skill Match: ${skillMatchScore}% ` +
+      `(${matchedSkillsCount} skills matched) | ` +
+      `Project Match: ${projectMatchScore}% | ` +
+      `Education Match: ${educationMatchScore}%.`;
+
 
     return {
       score: overallMatchScore,
@@ -81,4 +231,5 @@ export class MatchingEngine {
   }
 }
 
-export const matchingEngine = new MatchingEngine();
+export const matchingEngine =
+  new MatchingEngine();
