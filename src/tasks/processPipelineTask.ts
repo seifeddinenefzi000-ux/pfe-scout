@@ -1,4 +1,4 @@
-import { task } from '@trigger.dev/sdk/v3';
+import { task } from '@trigger.dev/sdk';
 
 import { NormalizationStage } from '../pipeline/NormalizationStage.js';
 import { DeduplicationStage } from '../pipeline/DeduplicationStage.js';
@@ -17,15 +17,26 @@ import { RawInternship } from '../models/DomainModels.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 
+interface ProcessPipelinePayload {
+  rawItems: RawInternship[];
+  sourceId?: string;
+}
+
 export const processPipelineTask = task({
   id: 'process-pipeline',
 
-  run: async (payload: {
-    rawItems: RawInternship[];
-    sourceId?: string;
-  }) => {
+  run: async (payload: ProcessPipelinePayload) => {
+    if (!payload || !Array.isArray(payload.rawItems)) {
+      throw new Error(
+        'Invalid process-pipeline payload: rawItems must be an array.'
+      );
+    }
+
     logger.info(
-      `Starting PFE Scout international internship pipeline for ${payload.rawItems.length} raw items`
+      `Starting PFE Scout international internship pipeline for ${payload.rawItems.length} raw items`,
+      {
+        sourceId: payload.sourceId,
+      }
     );
 
     // ------------------------------------------------------------
@@ -36,8 +47,9 @@ export const processPipelineTask = task({
       NormalizationStage.toCanonical(raw, payload.sourceId)
     );
 
-    logger.info(`Normalized ${canonicalItems.length} internships.`);
-
+    logger.info(
+      `Normalized ${canonicalItems.length} internships.`
+    );
 
     // ------------------------------------------------------------
     // 2. DEDUPLICATION
@@ -47,8 +59,9 @@ export const processPipelineTask = task({
 
     const { unique } = await dedup.process(canonicalItems);
 
-    logger.info(`After deduplication: ${unique.length} internships.`);
-
+    logger.info(
+      `After deduplication: ${unique.length} internships.`
+    );
 
     // ------------------------------------------------------------
     // 3. VERIFICATION
@@ -58,8 +71,9 @@ export const processPipelineTask = task({
 
     const { verified } = verifier.verify(unique);
 
-    logger.info(`Verified ${verified.length} internships.`);
-
+    logger.info(
+      `Verified ${verified.length} internships.`
+    );
 
     // ------------------------------------------------------------
     // 4. INTERNATIONAL ELIGIBILITY FILTER
@@ -74,7 +88,6 @@ export const processPipelineTask = task({
       `International eligibility filter kept ${eligibleItems.length} internships.`
     );
 
-
     // ------------------------------------------------------------
     // 5. RESUME PARSING
     // ------------------------------------------------------------
@@ -82,7 +95,6 @@ export const processPipelineTask = task({
     const resume = await resumeParserService.parseResume(
       env.USER_RESUME_PATH
     );
-
 
     // ------------------------------------------------------------
     // 6. MATCH EACH INTERNSHIP TO USER PROFILE
@@ -100,7 +112,6 @@ export const processPipelineTask = task({
         item.projectMatchScore = match.projectMatchScore;
         item.educationMatchScore = match.educationMatchScore;
         item.matchExplanation = match.explanation;
-
       } catch (error) {
         logger.error(
           `Failed to match internship "${item.title}"`,
@@ -110,7 +121,6 @@ export const processPipelineTask = task({
         );
       }
     }
-
 
     // ------------------------------------------------------------
     // 7. RANK
@@ -123,7 +133,6 @@ export const processPipelineTask = task({
     logger.info(
       `Ranking completed. ${ranked.length} internships ranked.`
     );
-
 
     // ------------------------------------------------------------
     // 8. ENRICH TOP RESULTS
@@ -140,7 +149,6 @@ export const processPipelineTask = task({
           );
 
         enrichedListings.push(enriched);
-
       } catch (error) {
         logger.warn(
           `Could not enrich internship "${item.title}"`,
@@ -150,7 +158,6 @@ export const processPipelineTask = task({
         );
       }
     }
-
 
     // ------------------------------------------------------------
     // 9. SAVE TO DATABASE
@@ -162,6 +169,9 @@ export const processPipelineTask = task({
     const { savedCount } =
       await internshipRepo.saveBatch(ranked);
 
+    logger.info(
+      `Saved ${savedCount} internships to Supabase.`
+    );
 
     // ------------------------------------------------------------
     // 10. TELEGRAM DIGEST
@@ -172,7 +182,6 @@ export const processPipelineTask = task({
       eligibleItems.length,
       ranked
     );
-
 
     // ------------------------------------------------------------
     // 11. RESULT
@@ -196,13 +205,13 @@ export const processPipelineTask = task({
         enrichedListings.length,
 
       topRankedTitle:
-        ranked[0]?.title,
+        ranked[0]?.title ?? null,
 
       topRankedCompany:
-        ranked[0]?.companyName,
+        ranked[0]?.companyName ?? null,
 
       topRankedCountry:
-        ranked[0]?.country,
+        ranked[0]?.country ?? null,
     };
   },
 });
