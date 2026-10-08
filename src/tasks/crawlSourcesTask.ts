@@ -16,7 +16,6 @@ export const crawlSourcesTask = task({
     logger.info('Starting PFE Scout international source crawling');
 
     const sourceRepo = new SourceRepository();
-
     const activeSources = await sourceRepo.getActiveSources();
 
     let totalItemsCrawled = 0;
@@ -30,34 +29,13 @@ export const crawlSourcesTask = task({
         pluginRegistry.getForUrl(source.url);
 
       if (!plugin) {
-        logger.warn(
-          `No plugin found for source: ${source.name}`,
-          {
-            pluginId: source.pluginId,
-            url: source.url,
-          }
-        );
-
-        await sourceRepo.updateCrawlStatus(
-          source.id,
-          'NO_PLUGIN'
-        );
-
         sourcesFailed++;
+        await sourceRepo.updateCrawlStatus(source.id, 'NO_PLUGIN');
         continue;
       }
 
       try {
-        logger.info(
-          `Crawling source: ${source.name}`,
-          {
-            url: source.url,
-            plugin: plugin.id,
-          }
-        );
-
         const page = await plugin.collect(source.url);
-
         const rawItems = await plugin.normalize(page);
 
         totalItemsCrawled += rawItems.length;
@@ -76,20 +54,9 @@ export const crawlSourcesTask = task({
           });
 
           pipelinesStarted++;
-
-          logger.info(
-            `Processing pipeline completed for "${source.name}".`
-          );
-        } else {
-          logger.info(
-            `No internship items found for "${source.name}".`
-          );
         }
 
-        await sourceRepo.updateCrawlStatus(
-          source.id,
-          'HEALTHY'
-        );
+        await sourceRepo.updateCrawlStatus(source.id, 'HEALTHY');
       } catch (error) {
         sourcesFailed++;
 
@@ -100,23 +67,17 @@ export const crawlSourcesTask = task({
           }
         );
 
-        await sourceRepo.updateCrawlStatus(
-          source.id,
-          'ERROR'
-        );
+        await sourceRepo.updateCrawlStatus(source.id, 'ERROR');
       }
     }
 
-    logger.info(
-      'PFE Scout source crawling completed',
-      {
-        activeSources: activeSources.length,
-        sourcesProcessed,
-        sourcesFailed,
-        totalItemsCrawled,
-        pipelinesStarted,
-      }
-    );
+    logger.info('PFE Scout source crawling completed', {
+      activeSources: activeSources.length,
+      sourcesProcessed,
+      sourcesFailed,
+      totalItemsCrawled,
+      pipelinesStarted,
+    });
 
     return {
       activeSources: activeSources.length,
@@ -128,4 +89,3 @@ export const crawlSourcesTask = task({
   },
 });
 ```
-
