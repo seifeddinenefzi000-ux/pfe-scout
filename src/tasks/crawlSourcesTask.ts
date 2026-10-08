@@ -30,7 +30,12 @@ export const crawlSourcesTask = task({
 
       if (!plugin) {
         sourcesFailed++;
-        await sourceRepo.updateCrawlStatus(source.id, 'NO_PLUGIN');
+
+        await sourceRepo.updateCrawlStatus(
+          source.id,
+          'NO_PLUGIN'
+        );
+
         continue;
       }
 
@@ -42,49 +47,56 @@ export const crawlSourcesTask = task({
         sourcesProcessed++;
 
         logger.info(
-          `Source "${source.name}" produced ${rawItems.length} raw items.`
+          'Source produced internship items: ' +
+            String(rawItems.length)
         );
 
         if (rawItems.length > 0) {
           await processPipelineTask.triggerAndWait({
             payload: {
-              rawItems,
+              rawItems: rawItems,
               sourceId: source.id,
             },
           });
 
           pipelinesStarted++;
+
+          logger.info(
+            'Processing pipeline completed successfully'
+          );
         }
 
-        await sourceRepo.updateCrawlStatus(source.id, 'HEALTHY');
+        await sourceRepo.updateCrawlStatus(
+          source.id,
+          'HEALTHY'
+        );
       } catch (error) {
         sourcesFailed++;
 
         logger.error(
-          `Error crawling source "${source.name}"`,
+          'Error while crawling source',
           {
             error: String(error),
           }
         );
 
-        await sourceRepo.updateCrawlStatus(source.id, 'ERROR');
+        await sourceRepo.updateCrawlStatus(
+          source.id,
+          'ERROR'
+        );
       }
     }
 
-    logger.info('PFE Scout source crawling completed', {
-      activeSources: activeSources.length,
-      sourcesProcessed,
-      sourcesFailed,
-      totalItemsCrawled,
-      pipelinesStarted,
-    });
+    logger.info(
+      'PFE Scout source crawling completed'
+    );
 
     return {
       activeSources: activeSources.length,
-      sourcesProcessed,
-      sourcesFailed,
-      totalItemsCrawled,
-      pipelinesStarted,
+      sourcesProcessed: sourcesProcessed,
+      sourcesFailed: sourcesFailed,
+      totalItemsCrawled: totalItemsCrawled,
+      pipelinesStarted: pipelinesStarted,
     };
   },
 });
