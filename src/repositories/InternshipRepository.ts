@@ -49,6 +49,8 @@ export class InternshipRepository {
     try {
       const dbRow = {
         source_id: internship.sourceId || null,
+        company_name: internship.companyName,
+        country: internship.country,
         title: internship.title,
         description: internship.description,
         location: internship.location,
@@ -108,6 +110,8 @@ export class InternshipRepository {
       const chunk = internships.slice(i, i + chunkSize);
       const dbRows = chunk.map((item) => ({
         source_id: item.sourceId || null,
+        company_name: item.companyName,
+        country: item.country,
         title: item.title,
         description: item.description,
         location: item.location,
@@ -169,15 +173,15 @@ export class InternshipRepository {
       return (data || []).map((row: Record<string, any>) => ({
         id: row.id,
         sourceId: row.source_id,
-        companyName: row.company_id || 'Unknown',
+        companyName: row.company_name || 'Unknown',
         title: row.title,
         description: row.description || '',
         location: row.location || 'Unknown',
-        country: row.country || 'India',
+        country: row.country || 'Unknown',
         isRemote: row.is_remote || false,
         stipendMin: row.stipend_min,
         stipendMax: row.stipend_max,
-        stipendCurrency: row.stipend_currency || 'INR',
+        stipendCurrency: row.stipend_currency || 'EUR',
         stipendText: row.stipend_text || '',
         applyUrl: row.apply_url,
         canonicalUrl: row.canonical_url,
