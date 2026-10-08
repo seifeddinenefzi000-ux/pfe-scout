@@ -3,56 +3,87 @@ import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 
 export class CountryFilterStage {
-  process(items: CanonicalInternship[]): { filtered: CanonicalInternship[]; rejectedCount: number } {
+  process(items: CanonicalInternship[]): {
+    filtered: CanonicalInternship[];
+    rejectedCount: number;
+  } {
     if (env.ALLOW_INTERNATIONAL) {
-      logger.info('International internships allowed by configuration.');
-      return { filtered: items, rejectedCount: 0 };
+      logger.info(
+        'International internships allowed by configuration.'
+      );
+
+      return {
+        filtered: items,
+        rejectedCount: 0,
+      };
     }
 
     const filtered: CanonicalInternship[] = [];
     let rejectedCount = 0;
 
-    const nonIndiaKeywords = [
-      'united states', 'usa', 'u.s.', 'canada', 'uk', 'united kingdom', 'london',
-      'germany', 'berlin', 'france', 'paris', 'australia', 'sydney', 'japan', 'tokyo',
-      'singapore', 'amsterdam', 'netherlands', 'switzerland', 'zurich', 'ireland', 'dublin'
-    ];
+    /*
+     * PFE Scout is international by default.
+     *
+     * We only reject opportunities when there is strong evidence
+     * that they are located in Tunisia.
+     */
 
-    const indianKeywords = [
-      'india', 'bengaluru', 'bangalore', 'hyderabad', 'pune', 'gurgaon', 'gurugram',
-      'noida', 'mumbai', 'chennai', 'delhi', 'ncr', 'kolkata', 'ahmedabad', 'thiruvananthapuram',
-      'kochi', 'indore', 'jaipur', 'remote in india', 'work from home (india)'
+    const tunisiaKeywords = [
+      'tunisia',
+      'tunis',
+      'tunisie',
+      'monastir',
+      'sousse',
+      'sfax',
+      'bizerte',
+      'gabes',
+      'gabès',
+      'nabeul',
+      'hammamet',
+      'mahdia',
+      'kairouan',
+      'kasserine',
+      'ariana',
+      'ben arous',
+      'menzah',
+      'lac 1',
+      'lac 2',
     ];
 
     for (const item of items) {
       const locLower = item.location.toLowerCase();
-      const titleLower = item.title.toLowerCase();
-      const descLower = item.description.toLowerCase();
+      const countryLower = item.country.toLowerCase();
 
-      // Check explicit non-India keywords
-      const isExplicitNonIndia = nonIndiaKeywords.some((kw) =>
-        locLower.includes(kw) || titleLower.includes(`(${kw})`) || titleLower.includes(`- ${kw}`)
+      const isTunisia = tunisiaKeywords.some(
+        (keyword) =>
+          locLower.includes(keyword) ||
+          countryLower.includes(keyword)
       );
 
-      if (isExplicitNonIndia) {
+      if (isTunisia) {
         rejectedCount++;
+
+        logger.debug(
+          `Rejected Tunisia opportunity: ${item.title} | ${item.location}`
+        );
+
         continue;
       }
 
-      // Check Indian keywords or general remote
-      const isExplicitIndia = indianKeywords.some((kw) =>
-        locLower.includes(kw) || descLower.includes(kw) || titleLower.includes(kw)
-      );
+      /*
+       * Keep international and unknown-location opportunities.
+       */
 
-      if (isExplicitIndia || item.isRemote || locLower === '' || locLower === 'remote' || locLower === 'unknown') {
-        item.country = 'India';
-        filtered.push(item);
-      } else {
-        rejectedCount++;
-      }
+      filtered.push(item);
     }
 
-    logger.info(`📍 CountryFilterStage (India Only): Kept ${filtered.length} listings, rejected ${rejectedCount} non-India positions.`);
-    return { filtered, rejectedCount };
+    logger.info(
+      `International CountryFilterStage: Kept ${filtered.length} international listings, rejected ${rejectedCount} Tunisia listings.`
+    );
+
+    return {
+      filtered,
+      rejectedCount,
+    };
   }
 }

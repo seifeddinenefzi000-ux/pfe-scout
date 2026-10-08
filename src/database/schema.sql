@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS internships (
     is_remote BOOLEAN DEFAULT FALSE,
     stipend_min NUMERIC(12, 2),
     stipend_max NUMERIC(12, 2),
-    stipend_currency VARCHAR(10) DEFAULT 'INR',
+    stipend_currency VARCHAR(10) DEFAULT 'EUR',
     stipend_text VARCHAR(100),
     apply_url TEXT NOT NULL,
     canonical_url TEXT UNIQUE,

@@ -2,16 +2,22 @@ import { pluginRegistry } from './PluginRegistry.js';
 import { GenericHtmlPlugin } from './impl/GenericHtmlPlugin.js';
 import { GitHubInternshipPlugin } from './impl/GitHubInternshipPlugin.js';
 import { RssSitemapPlugin } from './impl/RssSitemapPlugin.js';
-import { AICTEPlugin } from './impl/govt/AICTEPlugin.js';
-import { GovtResearchLabsPlugin } from './impl/govt/GovtResearchLabsPlugin.js';
 import { ATSScraperPlugin } from './impl/ats/ATSScraperPlugin.js';
-import { UnstopInternshalaPlugin } from './impl/platforms/UnstopInternshalaPlugin.js';
 
 export function initializePlugins(): void {
-  pluginRegistry.register(new AICTEPlugin());
-  pluginRegistry.register(new GovtResearchLabsPlugin());
+  /*
+   * PFE Scout is international.
+   *
+   * India-specific plugins such as AICTE,
+   * Indian Government Research Labs, and
+   * Unstop/Internshala are intentionally not
+   * registered in the production crawler.
+   *
+   * Their source files are kept for reference
+   * and can be re-enabled later if needed.
+   */
+
   pluginRegistry.register(new ATSScraperPlugin());
-  pluginRegistry.register(new UnstopInternshalaPlugin());
   pluginRegistry.register(new GitHubInternshipPlugin());
   pluginRegistry.register(new RssSitemapPlugin());
   pluginRegistry.register(new GenericHtmlPlugin());
