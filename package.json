@@ -39,15 +39,14 @@
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
     "mammoth": "^1.9.0",
-    "pdf-parse": "^1.1.1",
     "playwright": "^1.50.1",
     "rss-parser": "^3.13.0",
+    "unpdf": "^1.8.1",
     "zod": "^3.24.2"
   },
   "devDependencies": {
     "@trigger.dev/build": "4.5.9",
     "@types/node": "^22.13.4",
-    "@types/pdf-parse": "^1.1.4",
     "prettier": "^3.5.1",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3",
