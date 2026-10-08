@@ -2,141 +2,361 @@ import fs from 'fs';
 import path from 'path';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
+
 import { ResumeData } from '../models/DomainModels.js';
+import { getSupabaseClient } from '../database/client.js';
 import { logger } from '../utils/logger.js';
 
 export class ResumeParserService {
+  private supabase = getSupabaseClient();
+
   async parseResume(filePath: string): Promise<ResumeData> {
-    const absPath = path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
-    logger.info(`🔍 Stage 1: Loading resume file...`);
+    logger.info('🔍 Stage 1: Loading resume file...');
 
-    if (!fs.existsSync(absPath)) {
-      const errorMsg = `Resume file not found at ${absPath}`;
-      logger.error(`❌ ${errorMsg}`);
-      return this.getErrorResumeData(errorMsg);
-    }
-
-    logger.info(`✓ Resume file found at: ${absPath}`);
-
-    const ext = path.extname(absPath).toLowerCase();
-    logger.info(`✓ File type detected: ${ext.toUpperCase() || 'PLAIN TEXT'}`);
-
-    let rawText = '';
     try {
-      const fileBuffer = fs.readFileSync(absPath);
+      let fileBuffer: Buffer;
+      let fileName: string;
+
+      if (filePath.startsWith('supabase://')) {
+        const storagePath = filePath.replace(
+          'supabase://',
+          ''
+        );
+
+        logger.info(
+          `☁️ Loading resume from Supabase Storage: ${storagePath}`
+        );
+
+        const { data, error } =
+          await this.supabase.storage
+            .from('resumes')
+            .download(storagePath);
+
+        if (error || !data) {
+          const errorMsg =
+            `Failed to download resume from Supabase Storage: ${
+              error?.message || 'Unknown error'
+            }`;
+
+          logger.error(`❌ ${errorMsg}`);
+
+          return this.getErrorResumeData(errorMsg);
+        }
+
+        const arrayBuffer =
+          await data.arrayBuffer();
+
+        fileBuffer = Buffer.from(arrayBuffer);
+        fileName = path.basename(storagePath);
+
+        logger.info(
+          `✓ Resume downloaded from Supabase Storage (${fileBuffer.length} bytes)`
+        );
+      } else {
+        const absPath = path.isAbsolute(filePath)
+          ? filePath
+          : path.join(process.cwd(), filePath);
+
+        logger.info(
+          `📁 Loading resume from local path: ${absPath}`
+        );
+
+        if (!fs.existsSync(absPath)) {
+          const errorMsg =
+            `Resume file not found at ${absPath}`;
+
+          logger.error(`❌ ${errorMsg}`);
+
+          return this.getErrorResumeData(errorMsg);
+        }
+
+        fileBuffer = fs.readFileSync(absPath);
+        fileName = path.basename(absPath);
+
+        logger.info(
+          `✓ Resume file found at: ${absPath}`
+        );
+      }
+
+      const ext =
+        path.extname(fileName).toLowerCase();
+
+      logger.info(
+        `✓ File type detected: ${
+          ext.toUpperCase() || 'PLAIN TEXT'
+        }`
+      );
+
+      let rawText = '';
 
       if (ext === '.pdf') {
         const parsed = await pdfParse(fileBuffer);
         rawText = parsed.text;
       } else if (ext === '.docx') {
-        const parsed = await mammoth.extractRawText({ buffer: fileBuffer });
+        const parsed =
+          await mammoth.extractRawText({
+            buffer: fileBuffer,
+          });
+
         rawText = parsed.value;
-      } else if (ext === '.txt' || ext === '.md' || ext === '.markdown' || ext === '') {
+      } else if (
+        ext === '.txt' ||
+        ext === '.md' ||
+        ext === '.markdown' ||
+        ext === ''
+      ) {
         rawText = fileBuffer.toString('utf-8');
       } else {
-        const errorMsg = `Unsupported resume file extension: ${ext}`;
+        const errorMsg =
+          `Unsupported resume file extension: ${ext}`;
+
         logger.error(`❌ ${errorMsg}`);
+
         return this.getErrorResumeData(errorMsg);
       }
 
       if (!rawText || rawText.trim().length < 20) {
-        const errorMsg = `Resume file contains empty or insufficient text content.`;
+        const errorMsg =
+          'Resume file contains empty or insufficient text content.';
+
         logger.error(`❌ ${errorMsg}`);
+
         return this.getErrorResumeData(errorMsg);
       }
 
-      logger.info(`✓ Resume parsed successfully (${rawText.length} characters extracted)`);
+      logger.info(
+        `✓ Resume parsed successfully (${rawText.length} characters extracted)`
+      );
 
-      const structured = this.extractStructuredProfile(rawText);
-      logger.info(`✓ Candidate profile created (Completeness Score: ${structured.completenessScore}%)`);
+      const structured =
+        this.extractStructuredProfile(rawText);
+
+      logger.info(
+        `✓ Candidate profile created (Completeness Score: ${structured.completenessScore}%)`
+      );
+
       return structured;
     } catch (err) {
-      const errorMsg = `Exception during resume parsing: ${String(err)}`;
+      const errorMsg =
+        `Exception during resume parsing: ${String(err)}`;
+
       logger.error(`❌ ${errorMsg}`);
+
       return this.getErrorResumeData(errorMsg);
     }
   }
 
-  private extractStructuredProfile(rawText: string): ResumeData {
+  private extractStructuredProfile(
+    rawText: string
+  ): ResumeData {
     const textLower = rawText.toLowerCase();
 
+    /*
+     * Energy Engineering skill vocabulary.
+     * These are deliberately aligned with the PFE Scout
+     * target profile rather than generic software engineering.
+     */
     const knownSkills = [
-      'JavaScript', 'TypeScript', 'Node.js', 'Python', 'Go', 'Rust', 'Java', 'C++', 'C',
-      'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure',
-      'React', 'Next.js', 'Vite', 'Express', 'FastAPI', 'Django', 'PyTorch', 'TensorFlow',
-      'Git', 'Linux', 'REST API', 'GraphQL', 'CI/CD', 'System Design', 'DSA', 'SQL',
-      'Machine Learning', 'Artificial Intelligence', 'Deep Learning', 'NLP', 'Computer Vision'
+      'Energy Engineering',
+      'Renewable Energy',
+      'Energy Systems',
+      'Energy Management',
+      'Solar Energy',
+      'Solar PV',
+      'Photovoltaic',
+      'PV',
+      'Battery Energy Storage',
+      'BESS',
+      'Hydrogen',
+      'Power-to-X',
+      'Thermal Energy Storage',
+      'Heat Transfer',
+      'Thermodynamics',
+      'Fluid Mechanics',
+      'Energy Efficiency',
+      'Power Systems',
+      'Electrical Engineering',
+      'Power Electronics',
+      'Microgrids',
+      'Smart Grids',
+      'Wind Energy',
+      'CFD',
+      'MATLAB',
+      'Simulink',
+      'Simscape',
+      'COMSOL',
+      'ANSYS',
+      'ANSYS Fluent',
+      'AutoCAD',
+      'AutoCAD MEP',
+      'PVsyst',
+      'Python',
+      'Arduino',
+      'ESP32',
+      'IoT',
+      'LaTeX',
+      'Optimization',
+      'Modelling',
+      'Simulation',
+      'Modélisation',
+      'Énergies renouvelables',
+      'Génie énergétique',
+      'Systèmes énergétiques',
+      'Hydrogène',
+      'Stockage d’énergie',
+      'Transfert thermique',
+      'Thermodynamique',
+      'Efficacité énergétique',
     ];
 
-    const extractedSkills = knownSkills.filter((skill) =>
-      textLower.includes(skill.toLowerCase())
+    const extractedSkills =
+      knownSkills.filter((skill) =>
+        textLower.includes(skill.toLowerCase())
+      );
+
+    logger.info(
+      `✓ Skills extracted (${extractedSkills.length} skills found): ${extractedSkills
+        .slice(0, 12)
+        .join(', ')}`
     );
-    logger.info(`✓ Skills extracted (${extractedSkills.length} skills found): ${extractedSkills.slice(0, 8).join(', ')}...`);
 
-    // Projects Extraction
+    /*
+     * Projects
+     */
     const projects: ResumeData['projects'] = [];
-    if (textLower.includes('project')) {
+
+    if (
+      textLower.includes('project') ||
+      textLower.includes('projet')
+    ) {
       projects.push({
-        title: 'Full-Stack Engineering & Microservices System',
-        description: 'Built high-throughput backend services and interactive UI applications.',
-        technologies: extractedSkills.slice(0, 4),
+        title: 'Energy Engineering Projects',
+        description:
+          'Academic and engineering projects involving energy systems, renewable energy, modelling, simulation and optimization.',
+        technologies: extractedSkills.slice(0, 8),
       });
     }
-    logger.info(`✓ Projects extracted (${projects.length} key projects detected)`);
 
-    // Education Extraction
+    logger.info(
+      `✓ Projects extracted (${projects.length} key projects detected)`
+    );
+
+    /*
+     * Education
+     */
     const education: ResumeData['education'] = [];
-    let degree = 'B.Tech / B.E.';
-    let field = 'Computer Science & Engineering';
 
-    if (textLower.includes('master') || textLower.includes('m.tech')) degree = 'M.Tech / M.S.';
-    if (textLower.includes('artificial intelligence') || textLower.includes('ai')) field = 'AI & Data Science';
+    let degree =
+      'Engineering Degree + Master 2';
 
-    education.push({
-      institution: textLower.includes('iit') ? 'Indian Institute of Technology' : 'Indian Engineering Institution',
-      degree,
-      fieldOfStudy: field,
-      startYear: '2022',
-      endYear: '2026',
-    });
-    logger.info(`✓ Education extracted (${degree} in ${field})`);
+    let field =
+      'Energy Engineering / Energy Systems Management';
 
-    // Experience Extraction
-    const experience: ResumeData['experience'] = [];
-    if (textLower.includes('intern') || textLower.includes('experience') || textLower.includes('worked')) {
-      experience.push({
-        title: 'Software Engineering / AI Research Intern',
-        company: 'Technology Lab',
-        duration: '3 Months',
-        description: 'Developed production code, optimized APIs, and deployed cloud features.',
+    if (
+      textLower.includes('enim') ||
+      textLower.includes(
+        'école nationale des ingénieurs de monastir'
+      )
+    ) {
+      education.push({
+        institution:
+          'École Nationale d’Ingénieurs de Monastir (ENIM)',
+        degree,
+        fieldOfStudy: field,
+        startYear: '2024',
+        endYear: '2027',
+      });
+    } else {
+      education.push({
+        institution: 'Engineering School',
+        degree,
+        fieldOfStudy: field,
+        startYear: '2024',
+        endYear: '2027',
       });
     }
-    logger.info(`✓ Experience extracted (${experience.length} past roles detected)`);
 
-    // Calculate Granular Completeness Score
+    logger.info(
+      `✓ Education extracted (${degree} in ${field})`
+    );
+
+    /*
+     * Experience
+     */
+    const experience: ResumeData['experience'] = [];
+
+    if (
+      textLower.includes('internship') ||
+      textLower.includes('intern') ||
+      textLower.includes('stage') ||
+      textLower.includes('experience') ||
+      textLower.includes('expérience')
+    ) {
+      experience.push({
+        title: 'Energy Engineering Intern',
+        company: 'Engineering / Energy Organization',
+        duration: 'Internship',
+        description:
+          'Engineering experience related to energy systems, industrial processes and energy transition.',
+      });
+    }
+
+    logger.info(
+      `✓ Experience extracted (${experience.length} past roles detected)`
+    );
+
+    /*
+     * Completeness score
+     */
     let completenessScore = 0;
-    if (extractedSkills.length >= 5) completenessScore += 40;
-    else completenessScore += extractedSkills.length * 8;
 
-    if (projects.length > 0) completenessScore += 25;
-    if (education.length > 0) completenessScore += 20;
-    if (experience.length > 0) completenessScore += 15;
+    if (extractedSkills.length >= 10) {
+      completenessScore += 40;
+    } else {
+      completenessScore +=
+        extractedSkills.length * 4;
+    }
+
+    if (projects.length > 0) {
+      completenessScore += 20;
+    }
+
+    if (education.length > 0) {
+      completenessScore += 25;
+    }
+
+    if (experience.length > 0) {
+      completenessScore += 15;
+    }
 
     return {
-      name: 'Indian Engineering Candidate',
+      name: 'Energy Engineering Candidate',
       education,
-      skills: extractedSkills.length > 0 ? extractedSkills : ['Python', 'C++', 'Java', 'Data Structures', 'SQL'],
+      skills:
+        extractedSkills.length > 0
+          ? extractedSkills
+          : [
+              'Energy Engineering',
+              'Renewable Energy',
+              'Thermodynamics',
+              'Heat Transfer',
+              'MATLAB',
+              'Python',
+            ],
       projects,
       experience,
-      achievements: ['Hackathon Finalist', 'Competitive Programmer'],
-      certifications: ['Cloud & AI Specialist'],
+      achievements: [],
+      certifications: [],
       rawText,
       isParsedSuccessfully: true,
-      completenessScore: Math.min(100, completenessScore),
+      completenessScore:
+        Math.min(100, completenessScore),
     };
   }
 
-  private getErrorResumeData(reason: string): ResumeData {
+  private getErrorResumeData(
+    reason: string
+  ): ResumeData {
     return {
       name: 'Unknown Candidate',
       education: [],
@@ -153,4 +373,5 @@ export class ResumeParserService {
   }
 }
 
-export const resumeParserService = new ResumeParserService();
+export const resumeParserService =
+  new ResumeParserService();
