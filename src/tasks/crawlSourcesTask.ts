@@ -13,14 +13,11 @@ export const crawlSourcesTask = task({
   run: async () => {
     registerPlugins();
 
-    logger.info(
-      'Starting PFE Scout international source crawling'
-    );
+    logger.info('Starting PFE Scout international source crawling');
 
     const sourceRepo = new SourceRepository();
 
-    const activeSources =
-      await sourceRepo.getActiveSources();
+    const activeSources = await sourceRepo.getActiveSources();
 
     let totalItemsCrawled = 0;
     let sourcesProcessed = 0;
@@ -59,11 +56,9 @@ export const crawlSourcesTask = task({
           }
         );
 
-        const page =
-          await plugin.collect(source.url);
+        const page = await plugin.collect(source.url);
 
-        const rawItems =
-          await plugin.normalize(page);
+        const rawItems = await plugin.normalize(page);
 
         totalItemsCrawled += rawItems.length;
         sourcesProcessed++;
@@ -132,4 +127,5 @@ export const crawlSourcesTask = task({
     };
   },
 });
+```
 
