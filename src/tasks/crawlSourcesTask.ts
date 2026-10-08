@@ -1,4 +1,3 @@
-```ts
 import { task } from '@trigger.dev/sdk';
 
 import { pluginRegistry } from '../plugins/PluginRegistry.js';
@@ -12,8 +11,6 @@ export const crawlSourcesTask = task({
 
   run: async () => {
     registerPlugins();
-
-    logger.info('Starting PFE Scout international source crawling');
 
     const sourceRepo = new SourceRepository();
     const activeSources = await sourceRepo.getActiveSources();
@@ -30,12 +27,7 @@ export const crawlSourcesTask = task({
 
       if (!plugin) {
         sourcesFailed++;
-
-        await sourceRepo.updateCrawlStatus(
-          source.id,
-          'NO_PLUGIN'
-        );
-
+        await sourceRepo.updateCrawlStatus(source.id, 'NO_PLUGIN');
         continue;
       }
 
@@ -46,10 +38,7 @@ export const crawlSourcesTask = task({
         totalItemsCrawled += rawItems.length;
         sourcesProcessed++;
 
-        logger.info(
-          'Source produced internship items: ' +
-            String(rawItems.length)
-        );
+        logger.info('Items found: ' + rawItems.length);
 
         if (rawItems.length > 0) {
           await processPipelineTask.triggerAndWait({
@@ -60,36 +49,19 @@ export const crawlSourcesTask = task({
           });
 
           pipelinesStarted++;
-
-          logger.info(
-            'Processing pipeline completed successfully'
-          );
         }
 
-        await sourceRepo.updateCrawlStatus(
-          source.id,
-          'HEALTHY'
-        );
+        await sourceRepo.updateCrawlStatus(source.id, 'HEALTHY');
       } catch (error) {
         sourcesFailed++;
 
-        logger.error(
-          'Error while crawling source',
-          {
-            error: String(error),
-          }
-        );
+        logger.error('Crawl failed', {
+          error: String(error),
+        });
 
-        await sourceRepo.updateCrawlStatus(
-          source.id,
-          'ERROR'
-        );
+        await sourceRepo.updateCrawlStatus(source.id, 'ERROR');
       }
     }
-
-    logger.info(
-      'PFE Scout source crawling completed'
-    );
 
     return {
       activeSources: activeSources.length,
@@ -100,4 +72,3 @@ export const crawlSourcesTask = task({
     };
   },
 });
-
