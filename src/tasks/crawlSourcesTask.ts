@@ -1,3 +1,4 @@
+```ts
 import { task } from '@trigger.dev/sdk';
 
 import { pluginRegistry } from '../plugins/PluginRegistry.js';
@@ -72,15 +73,17 @@ export const crawlSourcesTask = task({
         );
 
         if (rawItems.length > 0) {
-          await processPipelineTask.trigger({
-            rawItems,
-            sourceId: source.id,
+          await processPipelineTask.triggerAndWait({
+            payload: {
+              rawItems,
+              sourceId: source.id,
+            },
           });
 
           pipelinesStarted++;
 
           logger.info(
-            `Processing pipeline triggered for "${source.name}".`
+            `Processing pipeline completed for "${source.name}".`
           );
         } else {
           logger.info(
@@ -129,3 +132,4 @@ export const crawlSourcesTask = task({
     };
   },
 });
+
