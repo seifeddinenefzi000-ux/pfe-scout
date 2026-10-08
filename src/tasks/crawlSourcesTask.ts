@@ -1,7 +1,6 @@
-```ts id="q8v3hs"
 import { task } from '@trigger.dev/sdk';
 
-import { crawlSourcesTask } from './crawlSourcesTask.js';
+import { crawlSourcesTask } from './tasks/crawlSourcesTask.js';
 
 export const testCrawlTask = task({
   id: 'test-crawl',
@@ -18,4 +17,3 @@ export const testCrawlTask = task({
     };
   },
 });
-```
