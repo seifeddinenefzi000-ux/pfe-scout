@@ -1,4 +1,5 @@
-import { task } from '@trigger.dev/sdk/v3';
+```ts
+import { task } from '@trigger.dev/sdk';
 
 import { pluginRegistry } from '../plugins/PluginRegistry.js';
 import { registerPlugins } from '../plugins/registerPlugins.js';
@@ -29,13 +30,11 @@ export const crawlSourcesTask = task({
     let pipelinesStarted = 0;
 
     for (const source of activeSources) {
-
       const plugin =
         pluginRegistry.get(source.pluginId) ||
         pluginRegistry.getForUrl(source.url);
 
       if (!plugin) {
-
         logger.warn(
           `No plugin found for source: ${source.name}`,
           {
@@ -102,9 +101,7 @@ export const crawlSourcesTask = task({
           source.id,
           'HEALTHY'
         );
-
       } catch (error) {
-
         sourcesFailed++;
 
         logger.error(
@@ -142,3 +139,4 @@ export const crawlSourcesTask = task({
     };
   },
 });
+```
