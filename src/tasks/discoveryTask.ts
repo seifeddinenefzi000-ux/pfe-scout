@@ -1,4 +1,3 @@
-```ts
 import { task } from '@trigger.dev/sdk';
 
 import { SourceRepository } from '../repositories/SourceRepository.js';
@@ -29,4 +28,3 @@ export const discoveryTask = task({
     };
   },
 });
-```
