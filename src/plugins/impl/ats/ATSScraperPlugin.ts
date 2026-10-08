@@ -103,8 +103,10 @@ export class ATSScraperPlugin implements SourcePlugin {
 
         headers: {
           'content-type':
-            response.headers['content-type'] ||
-            'application/json',
+            String(
+              response.headers['content-type'] ||
+              'application/json'
+            ),
         },
 
         statusCode: response.status,

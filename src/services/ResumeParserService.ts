@@ -1,4 +1,3 @@
-```ts
 import fs from 'fs';
 import path from 'path';
 import mammoth from 'mammoth';
@@ -31,7 +30,7 @@ export class ResumeParserService {
         );
 
         logger.info(
-          `☁️ Loading resume from Supabase Storage: ${storagePath}`
+          `Loading resume from Supabase Storage: ${storagePath}`
         );
 
         const { data, error } =
@@ -127,13 +126,7 @@ export class ResumeParserService {
             mergePages: true,
           });
 
-          if (typeof result.text === 'string') {
-            rawText = result.text;
-          } else if (Array.isArray(result.text)) {
-            rawText = result.text.join('\n');
-          } else {
-            rawText = String(result.text || '');
-          }
+          rawText = result.text || '';
 
           logger.info(
             `✓ PDF text extraction completed (${rawText.length} characters)`
@@ -547,81 +540,3 @@ export class ResumeParserService {
 
 export const resumeParserService =
   new ResumeParserService();
-```
-
-### Also replace your `package.json` with this corrected version
-
-The important changes are:
-
-* removes `pdf-parse`
-* removes `@types/pdf-parse`
-* adds `unpdf`
-
-```json
-{
-  "name": "atlas-intern-ai",
-  "version": "1.0.0",
-  "description": "Autonomous, event-driven, AI-powered internship intelligence platform",
-  "main": "dist/index.js",
-  "type": "module",
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "plugin:test": "tsx src/scripts/testPlugin.ts",
-    "advisor:test": "tsx src/scripts/testAdvisor.ts",
-    "telegram:test": "tsx src/scripts/testTelegram.ts",
-    "resume:test": "tsx src/scripts/testResume.ts",
-    "pipeline:run": "tsx src/scripts/runPipeline.ts",
-    "lint": "tsc --noEmit",
-    "format": "prettier --write \"src/**/*.ts\""
-  },
-  "keywords": [
-    "internship",
-    "ai",
-    "autonomous",
-    "gemini",
-    "supabase",
-    "triggerdotdev",
-    "crawler"
-  ],
-  "author": "Atlas InternAI",
-  "license": "MIT",
-  "dependencies": {
-    "@google/genai": "latest",
-    "@supabase/server": "^1.4.1",
-    "@supabase/supabase-js": "^2.49.1",
-    "@trigger.dev/sdk": "4.5.9",
-    "axios": "^1.8.1",
-    "cheerio": "^1.0.0",
-    "dotenv": "^16.4.7",
-    "mammoth": "^1.9.0",
-    "unpdf": "^1.8.1",
-    "playwright": "^1.50.1",
-    "rss-parser": "^3.13.0",
-    "zod": "^3.24.2"
-  },
-  "devDependencies": {
-    "@trigger.dev/build": "4.5.9",
-    "@types/node": "^22.13.4",
-    "prettier": "^3.5.1",
-    "tsx": "^4.19.3",
-    "typescript": "^5.7.3",
-    "vitest": "^3.0.6"
-  }
-}
-```
-
-**Important:** because `package-lock.json` is also in your repository, GitHub/Trigger.dev needs the dependency lockfile updated too. If you're editing directly on GitHub, don't manually invent the lockfile.
-
-The safest next action is:
-
-1. Replace `ResumeParserService.ts` with the code above.
-2. Replace `package.json` with the code above.
-3. Commit both to `main`.
-4. **Stop there.**
-
-Trigger.dev should automatically start a new deployment. Once it says **Deployed**, tell me that, and we'll handle the `package-lock.json`/build result if Trigger reports a dependency problem.

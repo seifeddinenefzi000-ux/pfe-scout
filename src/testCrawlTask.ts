@@ -1,13 +1,13 @@
 import { task } from '@trigger.dev/sdk';
 
-import { crawlSourcesTask } from './crawlSourcesTask.js';
+import { crawlSourcesTask } from './tasks/crawlSourcesTask.js';
 
 export const testCrawlTask = task({
   id: 'test-crawl-duplicate',
 
   run: async () => {
     const result =
-      await crawlSourcesTask.trigger({});
+      await crawlSourcesTask.trigger();
 
     return {
       message:
