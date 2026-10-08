@@ -1,4 +1,3 @@
-```ts
 import { task } from '@trigger.dev/sdk';
 
 import { pluginRegistry } from '../plugins/PluginRegistry.js';
@@ -17,8 +16,7 @@ export const crawlSourcesTask = task({
       'Starting PFE Scout international source crawling'
     );
 
-    const sourceRepo =
-      new SourceRepository();
+    const sourceRepo = new SourceRepository();
 
     const activeSources =
       await sourceRepo.getActiveSources();
@@ -131,4 +129,3 @@ export const crawlSourcesTask = task({
     };
   },
 });
-```
