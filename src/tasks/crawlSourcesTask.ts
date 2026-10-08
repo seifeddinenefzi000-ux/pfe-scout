@@ -13,7 +13,9 @@ export const crawlSourcesTask = task({
     registerPlugins();
 
     const sourceRepo = new SourceRepository();
-    const activeSources = await sourceRepo.getActiveSources();
+
+    const activeSources =
+      await sourceRepo.getActiveSources();
 
     let totalItemsCrawled = 0;
     let sourcesProcessed = 0;
@@ -27,39 +29,75 @@ export const crawlSourcesTask = task({
 
       if (!plugin) {
         sourcesFailed++;
-        await sourceRepo.updateCrawlStatus(source.id, 'NO_PLUGIN');
+
+        await sourceRepo.updateCrawlStatus(
+          source.id,
+          'NO_PLUGIN'
+        );
+
+        logger.warn(
+          'No plugin found for source: ' + source.url
+        );
+
         continue;
       }
 
       try {
-        const page = await plugin.collect(source.url);
-        const rawItems = await plugin.normalize(page);
+        logger.info(
+          'Crawling source: ' + source.url
+        );
+
+        const page =
+          await plugin.collect(source.url);
+
+        const rawItems =
+          await plugin.normalize(page);
 
         totalItemsCrawled += rawItems.length;
         sourcesProcessed++;
 
-        logger.info('Items found: ' + rawItems.length);
+        logger.info(
+          'Items found: ' + rawItems.length
+        );
 
         if (rawItems.length > 0) {
+          logger.info(
+            'Starting process-pipeline with ' +
+              rawItems.length +
+              ' items.'
+          );
+
           await processPipelineTask.triggerAndWait({
-            payload: {
-              rawItems: rawItems,
-              sourceId: source.id,
-            },
+            rawItems: rawItems,
+            sourceId: source.id,
           });
 
           pipelinesStarted++;
+
+          logger.info(
+            'Process-pipeline completed successfully.'
+          );
         }
 
-        await sourceRepo.updateCrawlStatus(source.id, 'HEALTHY');
+        await sourceRepo.updateCrawlStatus(
+          source.id,
+          'HEALTHY'
+        );
       } catch (error) {
         sourcesFailed++;
 
-        logger.error('Crawl failed', {
-          error: String(error),
-        });
+        logger.error(
+          'Crawl failed',
+          {
+            error: String(error),
+            source: source.url,
+          }
+        );
 
-        await sourceRepo.updateCrawlStatus(source.id, 'ERROR');
+        await sourceRepo.updateCrawlStatus(
+          source.id,
+          'ERROR'
+        );
       }
     }
 
