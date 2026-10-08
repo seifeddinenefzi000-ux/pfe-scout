@@ -1,4 +1,3 @@
-```ts
 import { task } from '@trigger.dev/sdk';
 
 import { InternshipRepository } from '../repositories/InternshipRepository.js';
@@ -50,4 +49,3 @@ export const cleanupTask = task({
     };
   },
 });
-```
