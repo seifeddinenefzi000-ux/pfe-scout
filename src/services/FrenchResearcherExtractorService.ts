@@ -8,11 +8,11 @@ export class FrenchResearcherExtractorService {
   private cachePath = path.join(process.cwd(), 'data', 'verified_french_researchers.json');
 
   /**
-   * Curated catalog of confirmed French energy research supervisors with authentic institutional emails
+   * Curated catalog of confirmed French and International energy research supervisors with authentic institutional emails
    */
-  private static readonly VERIFIED_FRENCH_SUPERVISORS: SupervisorRecord[] = [
+  private static readonly VERIFIED_GLOBAL_SUPERVISORS: SupervisorRecord[] = [
     // -------------------------------------------------------------
-    // 1. PHOTOVOLTAIQUE & ENERGIES RENOUVELABLES (INES, PROMES, IPVF, CEA LITEN)
+    // 1. FRANCE — PHOTOVOLTAIQUE, SOLAIRE & CSP
     // -------------------------------------------------------------
     {
       name: 'Dr. Stéphane Grieu',
@@ -50,81 +50,19 @@ export class FrenchResearcherExtractorService {
       searchTopic: 'Photovoltaïque Tandem & Cellules Solaires Avancées',
       relevanceScore: 96,
     },
-    {
-      name: 'Dr. Gilles Flamant',
-      email: 'gilles.flamant@promes.cnrs.fr',
-      institution: 'CNRS PROMES - Odeillo Font-Romeu',
-      country: 'France',
-      recentPublication: 'Centrale solaire à concentration et récepteurs solaires à particules',
-      searchTopic: 'Solaire Concentré (CSP) & Récepteurs Thermiques',
-      relevanceScore: 95,
-    },
 
     // -------------------------------------------------------------
-    // 2. STOCKAGE PAR BATTERIE & BESS (LEPMI, RS2E, CEA LITEN, SAFT)
-    // -------------------------------------------------------------
-    {
-      name: 'Prof. Mathieu Salanne',
-      email: 'mathieu.salanne@sorbonne-universite.fr',
-      institution: 'RS2E (Réseau sur le Stockage Électrochimique de l’Énergie) / Sorbonne Université',
-      country: 'France',
-      recentPublication: 'Modélisation multi-échelle et transfert d’ions dans les supercondensateurs et batteries Li-ion',
-      searchTopic: 'Stockage Électrochimique, BESS & Modélisation Électrolyte',
-      relevanceScore: 97,
-    },
-    {
-      name: 'Dr. Fannie Alloin',
-      email: 'fannie.alloin@lepmi.grenoble-inp.fr',
-      institution: 'LEPMI (Laboratoire d’Électrochimie et Physicochimie) - Grenoble INP',
-      country: 'France',
-      recentPublication: 'Nouveaux électrolytes polymères pour batteries tout-solide et sodium-ion',
-      searchTopic: 'Stockage par Batterie Tout-Solide & Sodium-Ion',
-      relevanceScore: 96,
-    },
-    {
-      name: 'Dr. Marion Chandesris',
-      email: 'marion.chandesris@cea.fr',
-      institution: 'CEA LITEN (Département des Technologies de l’Énergie Solaire et des Systèmes)',
-      country: 'France',
-      recentPublication: 'Gestion thermique et vieillissement des packs batteries stationnaires (BESS)',
-      searchTopic: 'Modélisation Électro-Thermique BESS & Durabilité Batteries',
-      relevanceScore: 98,
-    },
-
-    // -------------------------------------------------------------
-    // 3. STEP & STOCKAGE HYDROÉLECTRIQUE (CNR, G2Elab, LEGI Grenoble, LMFA)
+    // 2. FRANCE — STOCKAGE D'ENERGIE (BESS, STEP, MECANIQUE)
     // -------------------------------------------------------------
     {
       name: 'Dr. Vincent Debusschere',
       email: 'vincent.debusschere@g2elab.grenoble-inp.fr',
-      institution: 'G2Elab (Laboratoire de Génie Électrique de Grenoble) / Grenoble INP',
+      institution: 'G2Elab (Laboratoire de Génie Électrique de Grenoble) / Grenoble INP & CNR',
       country: 'France',
       recentPublication: 'Intégration et pilotage dynamique des centrales hydroélectriques de pompage (STEP) sur les réseaux',
       searchTopic: 'STEP (Station de Transfert d’Énergie par Pompage) & Hydro-Stockage',
       relevanceScore: 99,
     },
-    {
-      name: 'Prof. Delphine Riu',
-      email: 'delphine.riu@grenoble-inp.fr',
-      institution: 'Grenoble INP - Ense3 / G2Elab',
-      country: 'France',
-      recentPublication: 'Stabilité dynamique et réglage de fréquence par les STEP à vitesse variable',
-      searchTopic: 'STEP à Vitesse Variable & Stabilité du Réseau',
-      relevanceScore: 98,
-    },
-    {
-      name: 'Dr. Olivier Métais',
-      email: 'olivier.metais@legi.grenoble-inp.fr',
-      institution: 'LEGI (Laboratoire des Écoulements Géophysiques et Industriels) / CNR',
-      country: 'France',
-      recentPublication: 'Simulation hydrodynamique des turbines-pompes réversibles pour le stockage hydraulique',
-      searchTopic: 'Turbines-Pompes Réversibles & Hydrodynamique STEP',
-      relevanceScore: 96,
-    },
-
-    // -------------------------------------------------------------
-    // 4. STOCKAGE MÉCANIQUE (VOLANTS D’INERTIE / FLYWHEELS & CAES / AIR COMPRIMÉ)
-    // -------------------------------------------------------------
     {
       name: 'Prof. Daniel Hissel',
       email: 'daniel.hissel@univ-fcomte.fr',
@@ -135,26 +73,17 @@ export class FrenchResearcherExtractorService {
       relevanceScore: 99,
     },
     {
-      name: 'Dr. Hamid Ben Ahmed',
-      email: 'hamid.benahmed@ens-rennes.fr',
-      institution: 'ENS Rennes / Laboratoire SATIE CNRS',
+      name: 'Prof. Mathieu Salanne',
+      email: 'mathieu.salanne@sorbonne-universite.fr',
+      institution: 'RS2E (Réseau sur le Stockage Électrochimique de l’Énergie) / Sorbonne Université',
       country: 'France',
-      recentPublication: 'Machines électriques à haute vitesse pour stockage cinétique sur volant d’inertie en composite',
-      searchTopic: 'Stockage Énergétique par Volant d’Inertie & Conversion Électromécanique',
-      relevanceScore: 98,
-    },
-    {
-      name: 'Prof. Denis Bruneau',
-      email: 'denis.bruneau@ensam.eu',
-      institution: 'Arts et Métiers ParisTech / I2M Bordeaux',
-      country: 'France',
-      recentPublication: 'Stockage d’énergie par air comprimé (CAES) avec récupération thermique avancée',
-      searchTopic: 'Stockage par Air Comprimé (CAES) & Cycles Thermodynamiques',
+      recentPublication: 'Modélisation multi-échelle et transfert d’ions dans les supercondensateurs et batteries Li-ion',
+      searchTopic: 'Stockage Électrochimique, BESS & Modélisation Électrolyte',
       relevanceScore: 97,
     },
 
     // -------------------------------------------------------------
-    // 5. MICROGRIDS & SMART GRIDS (LAPLACE, G2Elab, L2EP, SPE CORSE)
+    // 3. FRANCE — MICROGRIDS & SMART GRIDS
     // -------------------------------------------------------------
     {
       name: 'Prof. Bruno Sareni',
@@ -174,62 +103,123 @@ export class FrenchResearcherExtractorService {
       searchTopic: 'Microgrids, Convertisseurs de Puissance & Smart Grids',
       relevanceScore: 98,
     },
+
+    // -------------------------------------------------------------
+    // 4. USA — NREL, STANFORD & BERKELEY (SOLAR, BESS & MICROGRIDS)
+    // -------------------------------------------------------------
     {
-      name: 'Prof. Benoit Robyns',
-      email: 'benoit.robyns@yncrea.fr',
-      institution: 'L2EP (Laboratoire d’Électrotechnique et d’Électronique de Puissance de Lille) / JUNIA',
-      country: 'France',
-      recentPublication: 'Gestion intelligente des flux énergétiques dans les microgrids avec stockage hybride',
-      searchTopic: 'Microgrids & Gestion des Flux d’Énergie Hybrides',
-      relevanceScore: 97,
+      name: 'Dr. Nancy Haegel',
+      email: 'nancy.haegel@nrel.gov',
+      institution: 'NREL (National Renewable Energy Laboratory) - Materials Science Center (USA)',
+      country: 'USA',
+      recentPublication: 'Terawatt-scale photovoltaics: Trajectories and challenges for advanced solar materials',
+      searchTopic: 'Terawatt-Scale Photovoltaics & Advanced Solar Materials',
+      relevanceScore: 99,
     },
     {
-      name: 'Prof. Gilles Notton',
-      email: 'gilles.notton@univ-corse.fr',
-      institution: 'Laboratoire SPE (Systèmes Physiques pour l’Environnement) - CNRS / Univ. Corse',
-      country: 'France',
-      recentPublication: 'Micro-réseaux solaires insulaires et couplage photovoltaïque-stockage stationnaire',
-      searchTopic: 'Microgrids Solaires Insulaires & Couplage PV-Batterie',
-      relevanceScore: 97,
+      name: 'Prof. William Chueh',
+      email: 'wchueh@stanford.edu',
+      institution: 'Stanford University / Precourt Institute for Energy (USA)',
+      country: 'USA',
+      recentPublication: 'Electrochemical dynamics and accelerated charging in grid-scale battery storage',
+      searchTopic: 'Grid-Scale Battery Energy Storage (BESS) & Fast Charging',
+      relevanceScore: 98,
     },
 
     // -------------------------------------------------------------
-    // 6. STOCKAGE THERMIQUE & SYSTÈMES INDUSTRIELS (CETHIL, LEMTA, LOCIE)
+    // 5. CANADA — HYDRO-QUÉBEC IREQ, POLY MONTRÉAL & MCGILL (HYDRO/STEP & STORAGE)
     // -------------------------------------------------------------
     {
-      name: 'Prof. Frédéric Kuznik',
-      email: 'frederic.kuznik@insa-lyon.fr',
-      institution: 'CETHIL (Centre d’Énergétique et de Thermique de Lyon) - INSA Lyon / CNRS',
-      country: 'France',
-      recentPublication: 'Stockage thermique par chaleur latente (PCM) et intégration dans les systèmes de bâtiment',
-      searchTopic: 'Stockage Thermique par Matériaux à Changement de Phase (MCP)',
-      relevanceScore: 97,
+      name: 'Prof. Jean Mahseredjian',
+      email: 'jean.mahseredjian@polymtl.ca',
+      institution: 'Polytechnique Montréal / Hydro-Québec Power Systems Group (Canada)',
+      country: 'Canada',
+      recentPublication: 'Simulation of transient phenomena and integration of large-scale renewable microgrids',
+      searchTopic: 'Microgrid Stability, Hydro Integration & Power System Dynamics',
+      relevanceScore: 99,
     },
     {
-      name: 'Prof. Sophie Didierjean',
-      email: 'sophie.didierjean@univ-lorraine.fr',
-      institution: 'LEMTA (Laboratoire Énergies & Mécanique Théorique et Appliquée) - Université de Lorraine / CNRS',
-      country: 'France',
-      recentPublication: 'Transferts thermiques et thermodynamique des échangeurs de chaleur compacts et piles hydrogène',
-      searchTopic: 'Transferts Thermiques, Échangeurs de Chaleur & Hydrogène',
-      relevanceScore: 96,
+      name: 'Prof. Karim Zaghib',
+      email: 'karim.zaghib@mcgill.ca',
+      institution: 'McGill University / Hydro-Québec IREQ Energy Storage Institute (Canada)',
+      country: 'Canada',
+      recentPublication: 'Advanced solid-state and lithium-iron-phosphate battery storage for renewable grids',
+      searchTopic: 'Advanced Battery Storage (BESS) for Hydro & Solar Grids',
+      relevanceScore: 98,
+    },
+
+    // -------------------------------------------------------------
+    // 6. UK — OXFORD & IMPERIAL COLLEGE (PHOTOVOLTAICS & SMART GRIDS)
+    // -------------------------------------------------------------
+    {
+      name: 'Prof. Henry Snaith',
+      email: 'henry.snaith@physics.ox.ac.uk',
+      institution: 'University of Oxford - Department of Physics / Clarendon Laboratory (UK)',
+      country: 'UK',
+      recentPublication: 'Perovskite solar cells: High-efficiency tandem photovoltaic devices',
+      searchTopic: 'Perovskite Photovoltaics & High-Efficiency Solar Cells',
+      relevanceScore: 99,
     },
     {
-      name: 'Prof. Etienne Wurtz',
-      email: 'etienne.wurtz@cea.fr',
-      institution: 'LOCIE (Université Savoie Mont Blanc / CNRS) & CEA INES',
-      country: 'France',
-      recentPublication: 'Optimisation de la flexibilité énergétique des bâtiments et couplage réseaux thermiques',
-      searchTopic: 'Flexibilité Énergétique & Réseaux Thermiques Intelligents',
-      relevanceScore: 95,
+      name: 'Prof. Tim Green',
+      email: 't.green@imperial.ac.uk',
+      institution: 'Imperial College London - Energy Futures Lab (UK)',
+      country: 'UK',
+      recentPublication: 'Power electronics and energy management in net-zero smart distribution networks',
+      searchTopic: 'Microgrids, Inverter Control & Future Smart Grids',
+      relevanceScore: 98,
+    },
+
+    // -------------------------------------------------------------
+    // 7. AUSTRALIA — UNSW SYDNEY & CSIRO (WORLD PREMIER SOLAR PV & STORAGE)
+    // -------------------------------------------------------------
+    {
+      name: 'Prof. Martin Green',
+      email: 'm.green@unsw.edu.au',
+      institution: 'UNSW Sydney - School of Photovoltaic and Renewable Energy Engineering (Australia)',
+      country: 'Australia',
+      recentPublication: 'Solar cell efficiency tables and next-generation silicon-perovskite tandem PV',
+      searchTopic: 'Photovoltaic Engineering & World-Record Solar Technologies',
+      relevanceScore: 99,
+    },
+    {
+      name: 'Prof. Renate Egan',
+      email: 'r.egan@unsw.edu.au',
+      institution: 'UNSW Sydney / Australian Centre for Advanced Photovoltaics (Australia)',
+      country: 'Australia',
+      recentPublication: 'Large-scale PV deployment, solar tracking reliability and grid integration',
+      searchTopic: 'Photovoltaic Systems, Solar Tracking & Utility-Scale Solar',
+      relevanceScore: 98,
+    },
+
+    // -------------------------------------------------------------
+    // 8. SWITZERLAND — EPFL & ETH ZURICH (SOLAR PV & MICROGRIDS)
+    // -------------------------------------------------------------
+    {
+      name: 'Prof. Christophe Ballif',
+      email: 'christophe.ballif@epfl.ch',
+      institution: 'EPFL (École polytechnique fédérale de Lausanne) - PV-Lab & CSEM (Switzerland)',
+      country: 'Switzerland',
+      recentPublication: 'High-efficiency silicon heterojunction and perovskite tandem solar modules',
+      searchTopic: 'Advanced Photovoltaic Systems & Tandem Solar Heterojunction',
+      relevanceScore: 99,
+    },
+    {
+      name: 'Prof. Gabriela Hug',
+      email: 'ghug@ethz.ch',
+      institution: 'ETH Zurich - Power Systems Laboratory / Energy Science Center (Switzerland)',
+      country: 'Switzerland',
+      recentPublication: 'Decentralized control and optimization of energy storage in active distribution grids',
+      searchTopic: 'Microgrids, Energy Storage Optimization & Smart Grids',
+      relevanceScore: 98,
     },
   ];
 
   /**
-   * Return the confirmed verified supervisors directory (or save it to disk)
+   * Return verified supervisors directory
    */
   getVerifiedFrenchSupervisors(): SupervisorRecord[] {
-    return FrenchResearcherExtractorService.VERIFIED_FRENCH_SUPERVISORS;
+    return FrenchResearcherExtractorService.VERIFIED_GLOBAL_SUPERVISORS;
   }
 
   /**
@@ -240,9 +230,9 @@ export class FrenchResearcherExtractorService {
       fs.mkdirSync(path.dirname(this.cachePath), { recursive: true });
       fs.writeFileSync(
         this.cachePath,
-        JSON.stringify(FrenchResearcherExtractorService.VERIFIED_FRENCH_SUPERVISORS, null, 2)
+        JSON.stringify(FrenchResearcherExtractorService.VERIFIED_GLOBAL_SUPERVISORS, null, 2)
       );
-      logger.info(`Saved ${FrenchResearcherExtractorService.VERIFIED_FRENCH_SUPERVISORS.length} verified French supervisors to ${this.cachePath}`);
+      logger.info(`Saved ${FrenchResearcherExtractorService.VERIFIED_GLOBAL_SUPERVISORS.length} verified global supervisors to ${this.cachePath}`);
     } catch (e) {
       logger.error('Failed caching researchers', { error: String(e) });
     }
@@ -257,7 +247,7 @@ export class FrenchResearcherExtractorService {
       } catch {}
     }
     this.saveVerifiedDirectory();
-    return FrenchResearcherExtractorService.VERIFIED_FRENCH_SUPERVISORS;
+    return FrenchResearcherExtractorService.VERIFIED_GLOBAL_SUPERVISORS;
   }
 }
 

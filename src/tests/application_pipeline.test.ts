@@ -171,4 +171,32 @@ describe('PFE Scout Core Pipeline Tests', () => {
     const isArchived = await archiveService.isOfferArchived(testOffer);
     expect(isArchived).toBe(true);
   });
+
+  it('SupervisorScoutService: should assemble balanced batch with US, Canada, UK, Australia, Switzerland, and France', async () => {
+    const batch = await supervisorScoutService.getDailySupervisorBatch(10);
+    const countries = batch.map(b => b.targetCountry);
+    expect(countries).toContain('France');
+    expect(countries.some(c => c === 'USA' || c === 'Canada' || c === 'UK' || c === 'Australia' || c === 'Switzerland')).toBe(true);
+  });
+
+  it('EligibilityFilterStage: should reject expired offers with past deadlines', () => {
+    const filter = new EligibilityFilterStage();
+    const expiredOffer: CanonicalInternship = {
+      id: 'exp-1',
+      title: 'Stage Solaire PV',
+      companyName: 'INES',
+      location: 'France',
+      applyUrl: 'https://ines.fr/1',
+      canonicalUrl: 'https://ines.fr/1',
+      contentHash: 'hash-exp',
+      deadline: '2025-01-01T00:00:00Z', // Past date
+      isRemote: false,
+      status: 'VERIFIED',
+      createdAt: new Date().toISOString(),
+    };
+
+    const res = filter.process([expiredOffer]);
+    expect(res.filtered.length).toBe(0);
+    expect(res.rejectedCount).toBe(1);
+  });
 });

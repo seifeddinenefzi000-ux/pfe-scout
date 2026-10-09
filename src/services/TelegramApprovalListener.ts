@@ -12,6 +12,37 @@ export class TelegramApprovalListener {
     return `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}`;
   }
 
+  private isPollingActive = false;
+
+  /**
+   * Start background long-polling loop for real-time Telegram button handling
+   */
+  startPolling(): void {
+    if (this.isPollingActive || !env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN === 'mock-bot-token') {
+      return;
+    }
+
+    this.isPollingActive = true;
+    logger.info('🤖 Real-time Telegram approval listener started.');
+
+    const pollLoop = async () => {
+      while (this.isPollingActive) {
+        try {
+          await this.processUpdatesOnce();
+        } catch (e) {
+          logger.warn('Polling error, retrying in 3s...', { error: String(e) });
+        }
+        await new Promise((res) => setTimeout(res, 1000));
+      }
+    };
+
+    pollLoop().catch((err) => logger.error('Polling loop stopped', { error: String(err) }));
+  }
+
+  stopPolling(): void {
+    this.isPollingActive = false;
+  }
+
   /**
    * Process pending Telegram updates
    */

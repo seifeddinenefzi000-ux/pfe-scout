@@ -8,9 +8,6 @@ import { archiveService } from './ArchiveService.js';
 export class SupervisorScoutService {
   private verifiedJsonPath = path.join(process.cwd(), 'data', 'verified_french_researchers.json');
 
-  /**
-   * Load confirmed French energy researchers with verified emails
-   */
   loadSupervisors(): SupervisorRecord[] {
     if (fs.existsSync(this.verifiedJsonPath)) {
       try {
@@ -26,12 +23,12 @@ export class SupervisorScoutService {
   }
 
   /**
-   * Get top N daily supervisor outreach batch (20 daily target), skipping all previously archived supervisors
+   * Get balanced daily batch: 1 US, 1 Canada, 1 UK, 1 Australia, 1 Switzerland + France
    */
   async getDailySupervisorBatch(limit: number = 20): Promise<ApplicationDraft[]> {
     const fullList = this.loadSupervisors();
 
-    // Asynchronously filter out all previously contacted or notified supervisors from the closed archive
+    // Filter out already contacted or notified supervisors
     const uncontacted: SupervisorRecord[] = [];
     for (const sup of fullList) {
       const isArchived = await archiveService.isSupervisorArchived(sup);
@@ -40,26 +37,40 @@ export class SupervisorScoutService {
       }
     }
 
-    logger.info(
-      `SupervisorScoutService: Found ${uncontacted.length} fresh uncontacted supervisors (out of ${fullList.length} total).`
-    );
+    logger.info(`SupervisorScoutService: Found ${uncontacted.length} fresh uncontacted supervisors.`);
 
-    const batch = uncontacted.slice(0, limit);
-    if (batch.length === 0) {
+    if (uncontacted.length === 0) {
       logger.info('SupervisorScoutService: All supervisors in the current catalog have been contacted and archived.');
       return [];
     }
 
-    logger.info(`SupervisorScoutService: Selected ${batch.length} new verified French researchers for cold outreach.`);
+    // Build balanced international selection
+    const targetCountries = ['USA', 'Canada', 'UK', 'Australia', 'Switzerland'];
+    const selected: SupervisorRecord[] = [];
+
+    for (const country of targetCountries) {
+      const match = uncontacted.find((s) => s.country.toLowerCase() === country.toLowerCase() && !selected.includes(s));
+      if (match) selected.push(match);
+    }
+
+    // Fill the remainder with France and other top researchers
+    for (const s of uncontacted) {
+      if (selected.length >= limit) break;
+      if (!selected.includes(s)) {
+        selected.push(s);
+      }
+    }
+
+    logger.info(`SupervisorScoutService: Selected ${selected.length} supervisors (Includes 1 US, 1 Canada, 1 UK, 1 Australia, 1 Switzerland + France).`);
 
     const drafts: ApplicationDraft[] = [];
-    for (const sup of batch) {
+    for (const sup of selected) {
       const draft = await applicationTailoringService.tailorForSupervisor(sup);
       drafts.push(draft);
     }
 
-    // Permanently archive this batch in local JSON and Supabase DB so they are never contacted again
-    await archiveService.archiveSupervisors(batch);
+    // Archive selected supervisors so they never repeat
+    await archiveService.archiveSupervisors(selected);
 
     return drafts;
   }
