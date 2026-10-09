@@ -34,7 +34,7 @@
     "@google/genai": "latest",
     "@supabase/server": "^1.4.1",
     "@supabase/supabase-js": "^2.49.1",
-    "@trigger.dev/sdk": "4.5.9",
+    "@trigger.dev/sdk": "4.7.3",
     "@types/nodemailer": "^8.0.2",
     "axios": "^1.8.1",
     "cheerio": "^1.0.0",
@@ -48,7 +48,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@trigger.dev/build": "4.5.9",
+    "@trigger.dev/build": "4.7.3",
     "@types/node": "^22.13.4",
     "prettier": "^3.5.1",
     "tsx": "^4.19.3",
