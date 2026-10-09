@@ -80,6 +80,7 @@ export class FrenchResearcherExtractorService {
 
     // Save to local cache
     try {
+      fs.mkdirSync(path.dirname(this.cachePath), { recursive: true });
       fs.writeFileSync(this.cachePath, JSON.stringify(verifiedResearchers, null, 2));
       logger.info(`Saved ${verifiedResearchers.length} verified French researchers to ${this.cachePath}`);
     } catch (e) {
