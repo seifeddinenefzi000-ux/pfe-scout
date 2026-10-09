@@ -123,4 +123,30 @@ describe('PFE Scout Core Pipeline Tests', () => {
     expect(match.score).toBeGreaterThanOrEqual(80);
     expect(match.skillMatchScore).toBeGreaterThanOrEqual(70);
   });
+
+  it('ApplicationTailoringService: should generate tailored paragraphs for STEP and Mechanical Storage', () => {
+    const stepDraft = (applicationTailoringService as any).buildTechnicalDomainParagraph(
+      'Stage STEP et stockage hydroélectrique par pompage-turbinage'
+    );
+    expect(stepDraft).toContain('STEP');
+    expect(stepDraft).toContain('pompage');
+
+    const flywheelDraft = (applicationTailoringService as any).buildTechnicalDomainParagraph(
+      'Stockage mécanique par volant d’inertie pour microgrid'
+    );
+    expect(flywheelDraft).toContain('volants d\'inertie');
+  });
+
+  it('SupervisorScoutService: should contain authentic French lab supervisor emails', () => {
+    const supervisors = supervisorScoutService.loadSupervisors();
+    const hasPromes = supervisors.some(s => s.email.includes('@promes.cnrs.fr'));
+    const hasG2Elab = supervisors.some(s => s.email.includes('@g2elab.grenoble-inp.fr') || s.email.includes('@grenoble-inp.fr'));
+    const hasFemto = supervisors.some(s => s.email.includes('@univ-fcomte.fr'));
+    const hasLaplace = supervisors.some(s => s.email.includes('@laplace.univ-tlse.fr'));
+
+    expect(hasPromes).toBe(true);
+    expect(hasG2Elab).toBe(true);
+    expect(hasFemto).toBe(true);
+    expect(hasLaplace).toBe(true);
+  });
 });

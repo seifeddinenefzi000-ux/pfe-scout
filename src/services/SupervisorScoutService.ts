@@ -8,7 +8,7 @@ export class SupervisorScoutService {
   private verifiedJsonPath = path.join(process.cwd(), 'data', 'verified_french_researchers.json');
 
   /**
-   * Load and return confirmed French energy researchers
+   * Load and return confirmed French energy researchers with verified emails
    */
   loadSupervisors(): SupervisorRecord[] {
     // 1. Try to load from verified French researcher database
@@ -25,21 +25,17 @@ export class SupervisorScoutService {
       }
     }
 
-    return [];
+    // 2. Fallback to curated verified directory
+    const verified = frenchResearcherExtractor.getVerifiedFrenchSupervisors();
+    frenchResearcherExtractor.saveVerifiedDirectory();
+    return verified;
   }
 
   /**
    * Get top N daily supervisor outreach batch (20 daily target)
    */
   async getDailySupervisorBatch(limit: number = 20): Promise<ApplicationDraft[]> {
-    let list = this.loadSupervisors();
-
-    // If no verified French records cached, trigger live extraction from HAL
-    if (list.length === 0) {
-      logger.info('No verified French researchers found in cache. Extracting from French HAL directory...');
-      list = await frenchResearcherExtractor.fetchHalResearchers(50);
-    }
-
+    const list = this.loadSupervisors();
     const batch = list.slice(0, limit);
     logger.info(`SupervisorScoutService: Selected ${batch.length} verified French researchers for cold outreach.`);
 
