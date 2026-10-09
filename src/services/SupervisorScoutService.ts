@@ -31,8 +31,14 @@ export class SupervisorScoutService {
   async getDailySupervisorBatch(limit: number = 20): Promise<ApplicationDraft[]> {
     const fullList = this.loadSupervisors();
 
-    // Filter out all previously contacted or notified supervisors from the closed archive folder
-    const uncontacted = fullList.filter((sup) => !archiveService.isSupervisorArchived(sup));
+    // Asynchronously filter out all previously contacted or notified supervisors from the closed archive
+    const uncontacted: SupervisorRecord[] = [];
+    for (const sup of fullList) {
+      const isArchived = await archiveService.isSupervisorArchived(sup);
+      if (!isArchived) {
+        uncontacted.push(sup);
+      }
+    }
 
     logger.info(
       `SupervisorScoutService: Found ${uncontacted.length} fresh uncontacted supervisors (out of ${fullList.length} total).`
@@ -52,8 +58,8 @@ export class SupervisorScoutService {
       drafts.push(draft);
     }
 
-    // Permanently archive this batch so they are never contacted again
-    archiveService.archiveSupervisors(batch);
+    // Permanently archive this batch in local JSON and Supabase DB so they are never contacted again
+    await archiveService.archiveSupervisors(batch);
 
     return drafts;
   }

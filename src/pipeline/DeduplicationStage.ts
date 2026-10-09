@@ -24,8 +24,9 @@ export class DeduplicationStage {
       }
 
       // 2. Check permanent closed archive folder (never repeat previous offers)
-      if (archiveService.isOfferArchived(item)) {
-        logger.info(`DeduplicationStage: Skipped previously archived offer "${item.title}"`);
+      const isArchived = await archiveService.isOfferArchived(item);
+      if (isArchived) {
+        logger.info(`DeduplicationStage: Skipped previously archived/processed offer "${item.title}"`);
         duplicatesCount++;
         continue;
       }

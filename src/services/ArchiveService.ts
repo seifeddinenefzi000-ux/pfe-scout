@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { logger } from '../utils/logger.js';
 import { CanonicalInternship } from '../models/DomainModels.js';
-import { SupervisorRecord, ApplicationDraft } from './ApplicationTailoringService.js';
+import { SupervisorRecord } from './ApplicationTailoringService.js';
 import { getSupabaseClient } from '../database/client.js';
 
 export interface ArchivedOfferRecord {
@@ -48,9 +48,6 @@ export class ArchiveService {
     }
   }
 
-  /**
-   * Load all permanently archived offers
-   */
   loadArchivedOffers(): ArchivedOfferRecord[] {
     try {
       if (fs.existsSync(this.offersArchivePath)) {
@@ -61,32 +58,68 @@ export class ArchiveService {
     return [];
   }
 
+  loadArchivedSupervisors(): ArchivedSupervisorRecord[] {
+    try {
+      if (fs.existsSync(this.supervisorsArchivePath)) {
+        const raw = fs.readFileSync(this.supervisorsArchivePath, 'utf8');
+        return JSON.parse(raw) || [];
+      }
+    } catch {}
+    return [];
+  }
+
   /**
-   * Check if an offer has already been seen / archived
+   * Check if an offer has already been seen / archived (both local JSON and Supabase DB)
    */
-  isOfferArchived(item: CanonicalInternship): boolean {
-    const archived = this.loadArchivedOffers();
+  async isOfferArchived(item: CanonicalInternship): Promise<boolean> {
     const itemUrl = (item.applyUrl || item.canonicalUrl || '').toLowerCase().trim();
     const itemHash = item.contentHash;
     const normTitleCompany = `${item.title} ${item.companyName}`.toLowerCase().replace(/[^a-z0-9]/g, '');
 
-    return archived.some((a) => {
+    // 1. Check local JSON archive
+    const localArchived = this.loadArchivedOffers();
+    const isLocal = localArchived.some((a) => {
       const aUrl = (a.url || '').toLowerCase().trim();
       const aHash = a.contentHash;
       const aNorm = `${a.title} ${a.company}`.toLowerCase().replace(/[^a-z0-9]/g, '');
-
       return (
         (itemUrl && aUrl && itemUrl === aUrl) ||
         (itemHash && aHash && itemHash === aHash) ||
         (normTitleCompany && aNorm && normTitleCompany === aNorm)
       );
     });
+
+    if (isLocal) return true;
+
+    // 2. Check Supabase internships table
+    try {
+      const { data } = await this.supabase
+        .from('internships')
+        .select('id, canonical_url, content_hash')
+        .or(`canonical_url.eq."${item.canonicalUrl}",content_hash.eq."${item.contentHash}"`)
+        .limit(1);
+
+      if (data && data.length > 0) return true;
+    } catch {}
+
+    // 3. Check Supabase applications table
+    try {
+      const { data: apps } = await this.supabase
+        .from('applications')
+        .select('id')
+        .ilike('target_name', `%${item.title.substring(0, 30)}%`)
+        .limit(1);
+
+      if (apps && apps.length > 0) return true;
+    } catch {}
+
+    return false;
   }
 
   /**
-   * Permanently archive processed offers so they never appear again
+   * Permanently archive processed offers
    */
-  archiveOffers(items: CanonicalInternship[]): void {
+  async archiveOffers(items: CanonicalInternship[]): Promise<void> {
     if (items.length === 0) return;
     this.ensureArchiveDir();
 
@@ -110,44 +143,47 @@ export class ArchiveService {
 
     try {
       fs.writeFileSync(this.offersArchivePath, JSON.stringify(current, null, 2));
-      logger.info(`ArchiveService: Closed and permanently archived ${items.length} offers (Total archived: ${current.length})`);
+      logger.info(`ArchiveService: Closed and permanently archived ${items.length} offers.`);
     } catch (e) {
       logger.error('Failed writing to archived_offers.json', { error: String(e) });
     }
   }
 
   /**
-   * Load all permanently archived supervisors
+   * Check if a supervisor has already been contacted (both local JSON and Supabase DB)
    */
-  loadArchivedSupervisors(): ArchivedSupervisorRecord[] {
-    try {
-      if (fs.existsSync(this.supervisorsArchivePath)) {
-        const raw = fs.readFileSync(this.supervisorsArchivePath, 'utf8');
-        return JSON.parse(raw) || [];
-      }
-    } catch {}
-    return [];
-  }
-
-  /**
-   * Check if a supervisor has already been contacted or notified
-   */
-  isSupervisorArchived(sup: SupervisorRecord): boolean {
-    const archived = this.loadArchivedSupervisors();
+  async isSupervisorArchived(sup: SupervisorRecord): Promise<boolean> {
     const supEmail = (sup.email || '').toLowerCase().trim();
     const supName = (sup.name || '').toLowerCase().trim();
 
-    return archived.some((a) => {
+    // 1. Local JSON check
+    const localArchived = this.loadArchivedSupervisors();
+    const isLocal = localArchived.some((a) => {
       const aEmail = (a.email || '').toLowerCase().trim();
       const aName = (a.name || '').toLowerCase().trim();
       return (supEmail && aEmail && supEmail === aEmail) || (supName && aName && supName === aName);
     });
+
+    if (isLocal) return true;
+
+    // 2. Check Supabase applications table
+    try {
+      const { data } = await this.supabase
+        .from('applications')
+        .select('id')
+        .or(`contact_info.eq."${sup.email}",target_name.ilike."%${sup.name}%"`)
+        .limit(1);
+
+      if (data && data.length > 0) return true;
+    } catch {}
+
+    return false;
   }
 
   /**
-   * Permanently archive contacted/notified supervisors so they are never repeated
+   * Permanently archive contacted supervisors
    */
-  archiveSupervisors(supervisors: SupervisorRecord[]): void {
+  async archiveSupervisors(supervisors: SupervisorRecord[]): Promise<void> {
     if (supervisors.length === 0) return;
     this.ensureArchiveDir();
 
@@ -166,11 +202,27 @@ export class ArchiveService {
           archivedAt: new Date().toISOString(),
         });
       }
+
+      // Record in Supabase applications table to prevent re-contacting
+      try {
+        await this.supabase.from('applications').upsert({
+          id: `sup_contact_${Buffer.from(sup.email).toString('hex').substring(0, 16)}`,
+          type: 'COLD_SUPERVISOR',
+          target_name: sup.name,
+          organization: sup.institution,
+          contact_info: sup.email,
+          country: sup.country,
+          cv_track_used: 'CV_Seif_Energies_Renouvelables',
+          status: 'PENDING_APPROVAL',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      } catch {}
     }
 
     try {
       fs.writeFileSync(this.supervisorsArchivePath, JSON.stringify(current, null, 2));
-      logger.info(`ArchiveService: Closed and permanently archived ${supervisors.length} supervisors (Total archived: ${current.length})`);
+      logger.info(`ArchiveService: Closed and permanently archived ${supervisors.length} supervisors.`);
     } catch (e) {
       logger.error('Failed writing to archived_supervisors.json', { error: String(e) });
     }

@@ -167,7 +167,7 @@ export const processPipelineTask = task({
 
     // D. Move processed opportunities to the permanent closed archive folder
     if (eligibleItems.length > 0) {
-      archiveService.archiveOffers(eligibleItems);
+      await archiveService.archiveOffers(eligibleItems);
     }
 
     // ------------------------------------------------------------

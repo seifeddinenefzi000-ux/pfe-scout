@@ -167,7 +167,8 @@ describe('PFE Scout Core Pipeline Tests', () => {
     };
 
     // Initially not archived
-    archiveService.archiveOffers([testOffer]);
-    expect(archiveService.isOfferArchived(testOffer)).toBe(true);
+    await archiveService.archiveOffers([testOffer]);
+    const isArchived = await archiveService.isOfferArchived(testOffer);
+    expect(isArchived).toBe(true);
   });
 });
