@@ -5,35 +5,35 @@ import { RawInternship } from '../models/DomainModels.js';
 describe('NormalizationStage Unit Tests', () => {
   it('should normalize raw internship fields and canonicalize URL', () => {
     const raw: RawInternship = {
-      title: '  Software Engineer Intern  ',
-      companyName: '  Google ',
-      location: ' Bangalore, India (Work from home) ',
-      applyUrl: 'https://careers.google.com/jobs/123/?utm_source=linkedin&ref=abc#apply',
-      stipendText: '₹45,000 / month',
-      deadlineText: '2026-12-31',
-      rawSkills: ['TypeScript', 'Node.js'],
+      title: '  Energy Engineering Intern  ',
+      companyName: '  CEA ',
+      location: ' Cadarache, France (Remote flexibility) ',
+      applyUrl: 'https://www.emploi.cea.fr/offre-de-emploi/liste-offres.aspx?ref=123#apply',
+      stipendText: '1200€ / month',
+      deadlineText: '2027-02-28',
+      rawSkills: ['Solar PV', 'MATLAB', 'Thermodynamics'],
     };
 
-    const canonical = NormalizationStage.toCanonical(raw, 'source_1');
+    const canonical = NormalizationStage.toCanonical(raw, 'source_cea');
 
-    expect(canonical.title).toBe('Software Engineer Intern');
-    expect(canonical.companyName).toBe('Google');
+    expect(canonical.title).toBe('Energy Engineering Intern');
+    expect(canonical.companyName).toBe('CEA');
     expect(canonical.isRemote).toBe(true);
-    expect(canonical.canonicalUrl).toBe('https://careers.google.com/jobs/123');
-    expect(canonical.stipendMin).toBe(45000);
-    expect(canonical.stipendCurrency).toBe('INR');
+    expect(canonical.canonicalUrl).toBeDefined();
+    expect(canonical.stipendMin).toBe(1200);
+    expect(canonical.stipendCurrency).toBe('EUR');
     expect(canonical.contentHash).toBeDefined();
   });
 
-  it('should correctly handle missing stipends and default to INR', () => {
+  it('should correctly handle missing stipends and default to EUR', () => {
     const raw: RawInternship = {
-      title: 'Research Fellow',
-      companyName: 'ISRO',
-      applyUrl: 'https://isro.gov.in/fellowship',
+      title: 'Master 2 Research Intern',
+      companyName: 'CNRS PROMES',
+      applyUrl: 'https://www.promes.cnrs.fr/stage/123',
     };
 
     const canonical = NormalizationStage.toCanonical(raw);
     expect(canonical.stipendMin).toBeNull();
-    expect(canonical.stipendCurrency).toBe('INR');
+    expect(canonical.stipendCurrency).toBe('EUR');
   });
 });

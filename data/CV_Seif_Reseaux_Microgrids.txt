@@ -1,0 +1,54 @@
+Seif Eddine Nefzi
+(+216) 20 016 808 | seifeddinenefzi000@gmail.com | linkedin.com/in/nefzi-seifeddine | Menzel Bourguiba, Tunisie
+PROFIL
+Futur ingénieur rigoureux et autonome, doté d’un solide esprit d’analyse et de synthèse. À la recherche d’un PFE
+de 6 mois à partir de janvier 2027 dans le domaine des réseaux électriques intelligents et des microgrids, afin de
+contribuer à l’intégration des énergies renouvelables et du stockage.
+FORMATION
+Diplôme National d’Ingénieur en Génie Énergétique (spécialité Énergies Renouvelables) 2024 – 2027
+École Nationale d’Ingénieurs de Monastir (ENIM) – 3e année
+Master Recherche en Génie Énergétique 2025 – 2027
+Université de Monastir (ENIM) – 2e année
+Classes Préparatoires Physique-Chimie (PC) 2021 – 2024
+IPEIB, Bizerte
+Baccalauréat, Sciences Expérimentales 2021
+Lycée Ibn Rached, Menzel Bourguiba
+EXPÉRIENCE PROFESSIONNELLE
+Stagiaire en Analyse de Production Pétrolière Juillet 2026
+CTKCP – Champ pétrolier de Sidi El Kilani
+• Analyse des rapports journaliers de production (février – juin 2026) : production d’huile et teneur en eau (BSW).
+• Synthèses mensuelles et graphiques pour interpréter les variations et identifier les tendances.
+• Découverte du procédé complet (têtes de puits, séparateurs, stockage, expédition) et des règles de sécurité sur
+site industriel.
+Stagiaire Ingénieur Photovoltaïque Juin 2026
+ZENITH SOLAR ENGINEERING Tunis
+• Dimensionnement d’installations photovoltaïques et réalisation d’études techniques.
+Stagiaire en Efficacité Énergétique Août 2025
+SOTULUB (Société Tunisienne des Lubrifiants) – Bizerte
+• Analyse énergétique du procédé de régénération des huiles usagées ; identification des pertes thermiques.
+• Étude d’optimisation des fours industriels et échangeurs de chaleur ; récupération de chaleur fatale.
+Stagiaire en Simulation et Dimensionnement du Bâtiment Juin 2025
+EcoBuilding Consulting Tunis
+• Simulation énergétique et dimensionnement de bâtiments.
+PROJETS ACADÉMIQUES ET ASSOCIATIFS
+Chef du Comité Projet, ENIM Energy Club (IngENIM) 2024 – Présent
+Monastir
+• EMS-MicroGrid : gestion d’énergie d’un microgrid hybride avec quatre algorithmes d’optimisation (programmation
+dynamique, algorithme génétique, PSO, programmation linéaire), backend FastAPI.
+• Conception et réalisation d’un suiveur solaire cinématique à deux axes (SunBox Track), piloté par Arduino/ESP32.
+• Système d’optimisation de l’éclairage piloté par ESP32 (capteurs PIR et LDR).
+• Prototypage : mini éolienne, mini barrage hydroélectrique, système énergétique autonome.
+Membre Actif, IEEE ENIM Student Branch 2024 – Présent
+ENIM, Monastir
+• Activités techniques et événements de la branche étudiante ; veille technologique dans l’énergie et l’électronique.
+CERTIFICATIONS
+• Battery Energy Storage Systems for Grid Ancillary Services (RENAC) Score : 96,67 %
+• AI for Renewable Energy & Sector Coupling (RENAC, Berlin) Score : 100 %
+• Initiation à l’Éclairage et DIALux (Erasmus+ MELINA, ENIM) Janv. 2026
+COMPÉTENCES
+• Domaines : microgrid, smart grid, gestion de l’énergie (EMS), stockage par batteries, optimisation, énergies
+renouvelables
+• Logiciels et outils : Python (optimisation, FastAPI), MATLAB, Arduino, ESP32, Excel (tableaux de bord), LaTeX
+• Transversales : leadership, gestion de projet, travail en équipe, communication technique, analyse de données
+LANGUES
+• Arabe (langue maternelle) | Français (courant) | Anglais (courant, technique)

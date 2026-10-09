@@ -22,7 +22,7 @@ export class RankingEngine {
       await this.prefRepo.getUserPriorities();
 
     for (const item of items) {
-      const resumeScore = item.resumeScore || 60;
+      const resumeScore = item.resumeScore || 70;
 
       const companyScore =
         this.computeCompanyScore(
@@ -60,53 +60,50 @@ export class RankingEngine {
         `Resume match score: ${resumeScore}%`
       );
 
-      /*
-       * General research / government organization bonus.
-       * This is no longer India-specific.
-       */
-      const companyLower =
-        item.companyName.toLowerCase();
-
-      const isResearchOrGovernment =
-        companyLower.includes('cnrs') ||
-        companyLower.includes('cea') ||
-        companyLower.includes('ifpen') ||
-        companyLower.includes('inria') ||
-        companyLower.includes('fraunhofer') ||
-        companyLower.includes('psi') ||
-        companyLower.includes('epfl') ||
-        companyLower.includes('vito') ||
-        companyLower.includes('drdo') ||
-        companyLower.includes('isro') ||
-        companyLower.includes('csir') ||
-        companyLower.includes('barc') ||
-        companyLower.includes('government') ||
-        companyLower.includes('govt');
-
-      if (isResearchOrGovernment) {
+      // 1. France Priority Bonus
+      if (item.country === 'France' || (item.location && item.location.toLowerCase().includes('france'))) {
+        overall += 25;
+        reasons.push('🇫🇷 France Priority Target (+25)');
+      } else if (item.country === 'Canada' || (item.location && item.location.toLowerCase().includes('canada'))) {
         overall += 15;
-
-        reasons.push(
-          '⭐ Research / government organization bonus (+15)'
-        );
+        reasons.push('🇨🇦 Canada Mitacs/Research Target (+15)');
       }
 
-      /*
-       * Remote flexibility bonus.
-       * This is international and not tied to India.
-       */
-      if (item.isRemote) {
+      // 2. Paid / Gratification Bonus
+      if (item.stipendMin && item.stipendMin > 0) {
         overall += 10;
-
-        reasons.push(
-          '🏠 Flexible remote opportunity (+10)'
-        );
+        reasons.push('💶 Paid/Gratified Opportunity (+10)');
       }
 
-      if (companyScore >= 90) {
-        reasons.push(
-          `🏢 Premier organization: ${item.companyName}`
-        );
+      // 3. Premier Research Organization Bonus
+      const companyLower = item.companyName.toLowerCase();
+      const isPremierEnergyOrg = [
+        'cnrs',
+        'cea',
+        'promes',
+        'laplace',
+        'ifpen',
+        'ines',
+        'lemta',
+        'g2elab',
+        'lepmi',
+        'coria',
+        'edf',
+        'engie',
+        'totalenergies',
+        'schneider',
+        'rte',
+        'mitacs',
+      ].some(org => companyLower.includes(org));
+
+      if (isPremierEnergyOrg) {
+        overall += 15;
+        reasons.push(`⭐ Premier Energy Lab/Company: ${item.companyName} (+15)`);
+      }
+
+      if (item.isRemote) {
+        overall += 5;
+        reasons.push('🏠 Flexible remote (+5)');
       }
 
       item.companyScore = companyScore;
@@ -119,9 +116,7 @@ export class RankingEngine {
         Math.round(overall)
       );
 
-      item.matchExplanation =
-        reasons.join(' | ');
-
+      item.matchExplanation = reasons.join(' | ');
       item.status = 'RANKED';
     }
 
@@ -136,64 +131,66 @@ export class RankingEngine {
     companyName: string,
     priorities: UserPriorities
   ): number {
-    const companyLower =
-      companyName.toLowerCase();
+    const companyLower = companyName.toLowerCase();
 
-    const prestigiousOrganizations = [
+    const premierLabs = [
       'cnrs',
       'cea',
+      'promes',
+      'laplace',
       'ifpen',
+      'ines',
+      'lemta',
+      'g2elab',
+      'lepmi',
+      'coria',
       'inria',
-      'fraunhofer',
-      'psi',
+      'edf',
+      'engie',
+      'totalenergies',
+      'schneider electric',
+      'rte',
       'epfl',
-      'vito',
-      'drdo',
-      'isro',
-      'csir',
-      'barc',
-      'google',
-      'microsoft',
-      'amazon',
-      'meta',
-      'apple',
+      'eth zurich',
+      'mitacs',
     ];
 
-    if (
-      prestigiousOrganizations.some(
-        (organization) =>
-          companyLower.includes(
-            organization
-          )
-      )
-    ) {
-      return 95;
+    if (premierLabs.some((org) => companyLower.includes(org))) {
+      return 98;
     }
 
-    return 70;
+    return 75;
   }
 
   private computeGrowthScore(
     title: string,
     priorities: UserPriorities
   ): number {
-    const targetDomains =
-      priorities.target_domains || [
-        'AI/ML',
-        'Backend',
-        'Systems',
-      ];
+    const targetEnergyDomains = [
+      'renewable',
+      'solar',
+      'photovoltaic',
+      'hydrogen',
+      'fuel cell',
+      'microgrid',
+      'smart grid',
+      'storage',
+      'battery',
+      'thermal',
+      'thermique',
+      'energy efficiency',
+      'modelling',
+      'simulation',
+      'cfd',
+      'pfe',
+      'stage',
+    ];
 
-    const titleLower =
-      title.toLowerCase();
+    const titleLower = title.toLowerCase();
 
-    for (const domain of targetDomains) {
-      if (
-        titleLower.includes(
-          domain.toLowerCase()
-        )
-      ) {
-        return 90;
+    for (const domain of targetEnergyDomains) {
+      if (titleLower.includes(domain)) {
+        return 95;
       }
     }
 
@@ -203,18 +200,16 @@ export class RankingEngine {
   private computeDeadlineScore(
     deadlineISO: string | null
   ): number {
-    if (!deadlineISO) return 50;
+    if (!deadlineISO) return 60;
 
     const diffDays =
-      (new Date(deadlineISO).getTime() -
-        Date.now()) /
-      (1000 * 3600 * 24);
+      (new Date(deadlineISO).getTime() - Date.now()) / (1000 * 3600 * 24);
 
     if (diffDays < 0) return 0;
-    if (diffDays <= 3) return 95;
-    if (diffDays <= 14) return 80;
+    if (diffDays <= 7) return 95;
+    if (diffDays <= 30) return 85;
 
-    return 60;
+    return 70;
   }
 
   private computeStipendScore(
@@ -223,31 +218,15 @@ export class RankingEngine {
     currency: string,
     priorities: UserPriorities
   ): number {
-    if (!min && !max) return 50;
-
-    /*
-     * Until proper FX conversion is implemented,
-     * only score stipend values when the currency is EUR.
-     *
-     * This prevents 35,000 INR from being treated like
-     * 35,000 EUR.
-     */
-    if (currency !== 'EUR') {
-      return 60;
+    if (min || max) {
+      const avg = ((min || 0) + (max || min || 0)) / 2;
+      if (avg >= 1000) return 95;
+      if (avg >= 600) return 85;
+      return 70;
     }
 
-    const avg =
-      ((min || 0) +
-        (max || min || 0)) /
-      2;
-
-    if (avg >= 3500) return 95;
-    if (avg >= 2500) return 80;
-    if (avg >= 1500) return 65;
-
-    return 40;
+    return 60;
   }
 }
 
-export const rankingEngine =
-  new RankingEngine();
+export const rankingEngine = new RankingEngine();
