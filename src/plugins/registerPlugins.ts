@@ -1,4 +1,3 @@
-
 import { pluginRegistry } from './PluginRegistry.js';
 import { ATSScraperPlugin } from './impl/ats/ATSScraperPlugin.js';
 import { GenericHtmlPlugin } from './impl/GenericHtmlPlugin.js';
