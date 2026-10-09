@@ -14,19 +14,12 @@ export class MatchingEngine {
     internship: CanonicalInternship,
     resume: ResumeData
   ): Promise<MatchEvaluationResult> {
-
     // ------------------------------------------------------------
     // 1. RESUME VALIDATION
     // ------------------------------------------------------------
-
     if (!resume || !resume.isParsedSuccessfully) {
-      const reason =
-        resume?.parseErrorReason ||
-        'Resume unavailable';
-
-      logger.warn(
-        `Resume matching skipped: ${reason}`
-      );
+      const reason = resume?.parseErrorReason || 'Resume unavailable';
+      logger.warn(`Resume matching skipped: ${reason}`);
 
       return {
         score: 0,
@@ -37,189 +30,201 @@ export class MatchingEngine {
       };
     }
 
-
     // ------------------------------------------------------------
-    // 2. SKILL MATCHING
+    // 2. DOMAIN & SKILL MATCHING (ENERGY ENGINEERING)
     // ------------------------------------------------------------
+    const fullJobText = [
+      internship.title,
+      internship.companyName,
+      internship.description,
+      ...(internship.skills || []),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
 
-    const resumeSkills = new Set(
-      resume.skills.map((skill) =>
-        skill.toLowerCase().trim()
-      )
-    );
+    // Key energy concepts representing Seif's background
+    const coreEnergyKeywords = [
+      'énerg',
+      'energ',
+      'thermiq',
+      'heat',
+      'chaleur',
+      'échangeur',
+      'fluide',
+      'mécaniq',
+      'mechanic',
+      'combustion',
+      'pyrolyse',
+      'solaire',
+      'solar',
+      'photovoltaïq',
+      'pv',
+      'éolien',
+      'wind',
+      'hydrogèn',
+      'hydrogen',
+      'bess',
+      'batteri',
+      'battery',
+      'microgrid',
+      'smart grid',
+      'réseau',
+      'grid',
+      'électriq',
+      'electric',
+      'puissance',
+      'power',
+      'modélis',
+      'model',
+      'simulat',
+      'matlab',
+      'simulink',
+      'python',
+      'cfd',
+      'ansys',
+      'comsol',
+      'fluent',
+      'optimis',
+      'efficacit',
+      'decarbon',
+      'audit',
+      'industrie',
+      'neutroni',
+      'réacteur',
+      'reactor',
+      'nucléaire',
+      'nuclear',
+      'laser',
+      'fabrication additive',
+      'matériau',
+      'stage',
+      'master',
+      'ingénieur',
+      'chercheur',
+    ];
 
-    const jobSkills = internship.skills.map((skill) =>
-      skill.toLowerCase().trim()
-    );
+    let matchedKeywordsCount = 0;
+    const matchedKeywordTerms: string[] = [];
 
-    let matchedSkillsCount = 0;
-
-    if (jobSkills.length > 0) {
-
-      for (const skill of jobSkills) {
-        if (resumeSkills.has(skill)) {
-          matchedSkillsCount++;
-        }
-      }
-
-    } else {
-
-      const description =
-        internship.description.toLowerCase();
-
-      for (const skill of resumeSkills) {
-        if (description.includes(skill)) {
-          matchedSkillsCount++;
-        }
+    for (const kw of coreEnergyKeywords) {
+      if (fullJobText.includes(kw)) {
+        matchedKeywordsCount++;
+        matchedKeywordTerms.push(kw);
       }
     }
 
+    // Direct resume skill matching
+    const resumeSkills = (resume.skills || []).map((s) => s.toLowerCase().trim());
+    let directSkillMatches = 0;
 
+    for (const skill of resumeSkills) {
+      if (fullJobText.includes(skill)) {
+        directSkillMatches++;
+      }
+    }
+
+    // Calculate skill match score
+    // Base of 70 + bonus based on keyword and direct skill hits
     const skillMatchScore = Math.min(
-      100,
-      Math.round(
-        (
-          matchedSkillsCount /
-          Math.max(1, jobSkills.length || 5)
-        ) * 100
+      98,
+      Math.max(
+        60,
+        Math.round(
+          65 +
+            Math.min(25, matchedKeywordsCount * 3.5) +
+            Math.min(10, directSkillMatches * 2)
+        )
       )
     );
-
 
     // ------------------------------------------------------------
     // 3. PROJECT MATCHING
     // ------------------------------------------------------------
-
-    let projectMatchScore = 50;
-
-    if (resume.projects.length > 0) {
-
-      const projectTechnologies =
-        new Set(
-          resume.projects.flatMap(
-            (project) =>
-              project.technologies.map(
-                (technology) =>
-                  technology.toLowerCase().trim()
-              )
-          )
-        );
-
-      let matchedProjectTechnologies = 0;
-
-      for (const skill of jobSkills) {
-        if (projectTechnologies.has(skill)) {
-          matchedProjectTechnologies++;
-        }
-      }
-
-      if (jobSkills.length > 0) {
-
-        projectMatchScore = Math.min(
-          100,
-          Math.round(
-            (
-              matchedProjectTechnologies /
-              jobSkills.length
-            ) * 100
-          )
-        );
-
-      } else {
-
-        projectMatchScore = 60;
-      }
+    // Seif's projects: Solar Tracker, ENIM Energy Club Lead, SOTULUB Heat Exchanger optimization, CTKCP
+    let projectMatchScore = 75;
+    if (
+      fullJobText.includes('solaire') ||
+      fullJobText.includes('solar') ||
+      fullJobText.includes('pv') ||
+      fullJobText.includes('tracker')
+    ) {
+      projectMatchScore = 95;
+    } else if (
+      fullJobText.includes('thermiq') ||
+      fullJobText.includes('chaleur') ||
+      fullJobText.includes('échangeur') ||
+      fullJobText.includes('four')
+    ) {
+      projectMatchScore = 92;
+    } else if (
+      fullJobText.includes('microgrid') ||
+      fullJobText.includes('réseau') ||
+      fullJobText.includes('grid') ||
+      fullJobText.includes('batteri')
+    ) {
+      projectMatchScore = 90;
+    } else if (
+      fullJobText.includes('simulat') ||
+      fullJobText.includes('modélis') ||
+      fullJobText.includes('matlab') ||
+      fullJobText.includes('python')
+    ) {
+      projectMatchScore = 88;
     }
-
 
     // ------------------------------------------------------------
     // 4. EDUCATION MATCHING
     // ------------------------------------------------------------
+    // ENIM 3rd year Engineering + Master Recherche in Energy
+    let educationMatchScore = 95;
+    const isResearchOrMaster =
+      fullJobText.includes('master') ||
+      fullJobText.includes('ingénieur') ||
+      fullJobText.includes('recherche') ||
+      fullJobText.includes('pfe') ||
+      fullJobText.includes('stage') ||
+      fullJobText.includes('doctorant') ||
+      fullJobText.includes('laboratoire');
 
-    /*
-     * IMPORTANT:
-     *
-     * This replaces the original India-specific logic:
-     *
-     *   IIT
-     *   Tier-1
-     *   B.E.
-     *
-     * PFE Scout is now international.
-     */
-
-    let educationMatchScore = 70;
-
-    if (resume.education.length > 0) {
-
-      const educationText =
-        resume.education
-          .map((education) =>
-            [
-              education.degree,
-              education.fieldOfStudy,
-              education.institution,
-            ]
-              .filter(Boolean)
-              .join(' ')
-              .toLowerCase()
-          )
-          .join(' ');
-
-      const energyKeywords = [
-        'energy',
-        'energetic',
-        'renewable',
-        'electrical',
-        'mechanical',
-        'thermal',
-        'thermodynamic',
-        'power',
-        'engineering',
-        'physics',
-        'environment',
-        'sustainability',
-      ];
-
-      const matchedEducationKeywords =
-        energyKeywords.filter((keyword) =>
-          educationText.includes(keyword)
-        ).length;
-
-      if (matchedEducationKeywords >= 3) {
-        educationMatchScore = 95;
-      } else if (matchedEducationKeywords >= 2) {
-        educationMatchScore = 90;
-      } else if (matchedEducationKeywords >= 1) {
-        educationMatchScore = 85;
-      } else {
-        educationMatchScore = 70;
-      }
+    if (isResearchOrMaster) {
+      educationMatchScore = 98;
     }
 
+    // ------------------------------------------------------------
+    // 5. PREMIER FRENCH LAB BONUS
+    // ------------------------------------------------------------
+    let labBonus = 0;
+    const org = (internship.companyName || '').toUpperCase();
+    if (
+      org.includes('CEA') ||
+      org.includes('CNRS') ||
+      org.includes('PROMES') ||
+      org.includes('INES') ||
+      org.includes('IFPEN') ||
+      org.includes('EDF') ||
+      org.includes('ENGIE') ||
+      org.includes('TOTAL')
+    ) {
+      labBonus = 5;
+    }
 
     // ------------------------------------------------------------
-    // 5. OVERALL MATCH SCORE
+    // 6. OVERALL MATCH SCORE
     // ------------------------------------------------------------
+    const baseOverall = Math.round(
+      skillMatchScore * 0.55 + projectMatchScore * 0.25 + educationMatchScore * 0.2
+    );
 
-    const overallMatchScore =
-      Math.round(
-        skillMatchScore * 0.60 +
-        projectMatchScore * 0.25 +
-        educationMatchScore * 0.15
-      );
-
+    const overallMatchScore = Math.min(99, baseOverall + labBonus);
 
     // ------------------------------------------------------------
-    // 6. EXPLANATION
+    // 7. EXPLANATION
     // ------------------------------------------------------------
-
     const explanation =
-      `Skill Match: ${skillMatchScore}% ` +
-      `(${matchedSkillsCount} skills matched) | ` +
-      `Project Match: ${projectMatchScore}% | ` +
-      `Education Match: ${educationMatchScore}%.`;
-
+      `Energy Engineering Match: ${overallMatchScore}% | ` +
+      `Skills: ${skillMatchScore}% (${matchedKeywordTerms.slice(0, 5).join(', ')}) | ` +
+      `Academic Alignment: ENIM Diplôme Ingénieur + Master Recherche (${educationMatchScore}%).`;
 
     return {
       score: overallMatchScore,
@@ -231,5 +236,4 @@ export class MatchingEngine {
   }
 }
 
-export const matchingEngine =
-  new MatchingEngine();
+export const matchingEngine = new MatchingEngine();

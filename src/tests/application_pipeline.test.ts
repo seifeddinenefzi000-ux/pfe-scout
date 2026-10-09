@@ -80,4 +80,47 @@ describe('PFE Scout Core Pipeline Tests', () => {
     expect(hasTunisia).toBe(false);
     expect(hasGermany).toBe(false);
   });
+
+  it('EmailSenderService: should resolve valid CV file path and handle mock sending', async () => {
+    const { emailSenderService } = await import('../services/EmailSenderService.js');
+    const cvPath = emailSenderService.resolveCvPath('CV_Seif_Thermicien.pdf');
+    expect(cvPath).toContain('CV_Seif_Thermicien.pdf');
+
+    const result = await emailSenderService.sendApplicationEmail({
+      to: 'supervisor@lab.fr',
+      subject: 'Candidature Stage PFE',
+      bodyText: 'Madame, Monsieur...',
+      cvFileName: 'CV_Seif_Thermicien.pdf',
+    });
+    expect(result.success).toBe(true);
+    expect(result.messageId).toBeDefined();
+  });
+
+  it('MatchingEngine: should give high matching score (>80%) for French energy and CEA research internships', async () => {
+    const { matchingEngine } = await import('../services/MatchingEngine.js');
+    const { resumeParserService } = await import('../services/ResumeParserService.js');
+
+    const sampleResume = (resumeParserService as any).extractStructuredProfile(
+      'Seif Eddine Nefzi ENIM Ecole Nationale Ingenieurs Monastir Master Recherche Energetique Solaire PV Thermique Echangeur MATLAB Python'
+    );
+
+    const ceaInternship: CanonicalInternship = {
+      id: 'cea-1',
+      title: 'Stage 6 mois Ingénieur/Master – Fabrication additive laser-fil : Etude des stratégies de dépôt H/F',
+      companyName: 'CEA',
+      location: 'France',
+      description: 'Domaine : Mécanique et thermique Contrat : Stage Modélisation et simulation transfert thermique laser',
+      skills: ['Mécanique et thermique', 'Stage'],
+      applyUrl: 'https://cea.fr/stage1',
+      canonicalUrl: 'https://cea.fr/stage1',
+      contentHash: 'hash-cea',
+      isRemote: false,
+      status: 'VERIFIED',
+      createdAt: new Date().toISOString(),
+    };
+
+    const match = await matchingEngine.evaluateMatch(ceaInternship, sampleResume);
+    expect(match.score).toBeGreaterThanOrEqual(80);
+    expect(match.skillMatchScore).toBeGreaterThanOrEqual(70);
+  });
 });

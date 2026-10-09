@@ -101,6 +101,19 @@ const envSchema = z.object({
     ])
     .default('INFO'),
 
+  SMTP_USER: z
+    .string()
+    .email()
+    .default('seifeddinenefzi000@gmail.com'),
+
+  SMTP_PASS: z
+    .string()
+    .default('byidxhbjuhcohddx'),
+
+  SMTP_SENDER_NAME: z
+    .string()
+    .default('Seif Eddine Nefzi'),
+
   NODE_ENV: z
     .enum([
       'development',

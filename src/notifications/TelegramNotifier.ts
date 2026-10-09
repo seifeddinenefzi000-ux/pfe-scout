@@ -13,6 +13,9 @@ export class TelegramNotifier {
     return Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_BOT_TOKEN !== 'mock-bot-token' && env.TELEGRAM_CHAT_ID);
   }
 
+  /**
+   * Send the daily digest of top verified opportunities
+   */
   async sendDailyDigest(
     analyzedCount: number,
     filteredCount: number,
@@ -30,32 +33,33 @@ export class TelegramNotifier {
 
     top5.forEach((item, idx) => {
       const icon = medalIcons[idx] || '🔹';
-      const matchPct = item.overallScore || 85;
+      const matchPct = item.overallScore || item.resumeScore || 85;
 
       topRecsSection += `
-${icon} *${this.escapeMarkdown(item.title)}*
-🏢 *Organization:* ${this.escapeMarkdown(item.companyName)}
-🌍 *Location:* ${this.escapeMarkdown(item.location || item.country || 'France')}
-🟢 *Match Score:* ${matchPct}%${item.stipendText ? `\n💰 *Gratification:* ${this.escapeMarkdown(item.stipendText)}` : ''}
-💡 *Key Focus:* ${this.escapeMarkdown(item.matchExplanation || 'Energy Engineering alignment')}
-🔗 [Consulter l'offre](${item.applyUrl})
+${icon} <b>${this.escapeHtml(item.title)}</b>
+🏢 <b>Organisme :</b> ${this.escapeHtml(item.companyName)}
+🌍 <b>Lieu :</b> ${this.escapeHtml(item.location || item.country || 'France')}
+🟢 <b>Adéquation Profil :</b> <b>${matchPct}%</b>${item.stipendText ? `\n💰 <b>Gratification :</b> ${this.escapeHtml(item.stipendText)}` : ''}
+💡 <b>Focus :</b> ${this.escapeHtml(item.matchExplanation || 'Génie Énergétique / Master Recherche ENIM')}
+🔗 <a href="${item.applyUrl}">Consulter l'offre officielle</a>
 -----------------------------------
 `;
     });
 
     const message = `
-🇫🇷 *PFE Scout — Quotidien d'Opportunités PFE Énergétique*
+🇫🇷 <b>PFE Scout — Quotidien d'Opportunités PFE Énergétique</b>
 
-📊 *Analyse du jour :*
-• Offres brutes analysées : *${analyzedCount}*
-• Retenues après filtrage strict : *${filteredCount}* (Priorité France & labs d'énergie, Tunisie & Allemagne exclues)
+📊 <b>Analyse du jour :</b>
+• Offres brutes analysées : <b>${analyzedCount}</b>
+• Retenues après filtrage strict : <b>${filteredCount}</b> (Priorité France & labs d'énergie, Tunisie & Allemagne exclues)
 
-🏆 *TOP OFFRES SÉLECTIONNÉES :*
+🏆 <b>TOP OPPORTUNITÉS SÉLECTIONNÉES :</b>
 ${topRecsSection}
-📱 *Validation requise :* Utilisez les fiches d'approbation ci-dessous pour valider les candidatures.
+📱 <b>Validation des candidatures :</b>
+Consultez les fiches détaillées ci-dessous et cliquez sur <b>Approuver</b> pour déclencher l'envoi personnalisé de votre candidature avec CV adapté.
 `.trim();
 
-    return this.postMessage(message);
+    return this.postHtmlMessage(message);
   }
 
   /**
@@ -68,29 +72,29 @@ ${topRecsSection}
     }
 
     const isCold = draft.type === 'COLD_SUPERVISOR';
-    const header = isCold ? '📬 *CANDIDATURE SPONTANÉE CHERCHEUR (COLD OUTREACH)*' : '📋 *OFFRE DE STAGE PFE PUBLIÉE*';
+    const header = isCold
+      ? '📬 <b>CANDIDATURE SPONTANÉE CHERCHEUR (COLD OUTREACH)</b>'
+      : '📋 <b>OFFRE DE STAGE PFE PUBLIÉE</b>';
 
     const message = `
 ${header}
 
-🎯 *Cible :* ${this.escapeMarkdown(draft.targetTitle)}
-🏛️ *Établissement / Lab :* ${this.escapeMarkdown(draft.targetOrganization)}
-📍 *Pays :* ${this.escapeMarkdown(draft.targetCountry)}
-👤 *Contact :* ${this.escapeMarkdown(draft.targetContact)}
+🎯 <b>Sujet :</b> ${this.escapeHtml(draft.targetTitle)}
+🏛️ <b>Établissement / Lab :</b> ${this.escapeHtml(draft.targetOrganization)}
+📍 <b>Pays :</b> ${this.escapeHtml(draft.targetCountry)}
+👤 <b>Contact :</b> ${this.escapeHtml(draft.targetContact)}
 
-📄 *CV Recommandé :* \`${draft.cvFileName}\`
-✉️ *Objet de l'email :* \`${this.escapeMarkdown(draft.emailSubject)}\`
+📄 <b>CV Sélectionné :</b> <code>${this.escapeHtml(draft.cvFileName)}</code>
+✉️ <b>Objet Email :</b> <code>${this.escapeHtml(draft.emailSubject)}</code>
 
-📝 *Extrait de la lettre / email :*
-\`\`\`text
-${draft.coverLetterOrEmailBody.substring(0, 450)}...
-\`\`\`
+📝 <b>Aperçu du message :</b>
+<pre>${this.escapeHtml(draft.coverLetterOrEmailBody.substring(0, 450))}...</pre>
 `.trim();
 
     const inlineKeyboard = {
       inline_keyboard: [
         [
-          { text: '✅ Approuver & Préparer', callback_data: `approve_${draft.id}` },
+          { text: '✅ Approuver & Envoyer Email', callback_data: `approve_${draft.id}` },
           { text: '❌ Rejeter', callback_data: `reject_${draft.id}` },
         ],
       ],
@@ -100,7 +104,7 @@ ${draft.coverLetterOrEmailBody.substring(0, 450)}...
       await axios.post(`${this.botUrl}/sendMessage`, {
         chat_id: env.TELEGRAM_CHAT_ID,
         text: message,
-        parse_mode: 'Markdown',
+        parse_mode: 'HTML',
         reply_markup: inlineKeyboard,
         disable_web_page_preview: true,
       });
@@ -116,8 +120,7 @@ ${draft.coverLetterOrEmailBody.substring(0, 450)}...
    */
   async sendDailyBatchSummary(
     postedCount: number,
-    supervisorCount: number,
-    approvedCount: number = 0
+    supervisorCount: number
   ): Promise<boolean> {
     if (!this.isConfigured()) {
       logger.info(`[Mock Telegram] Daily Target: ${postedCount} posted + ${supervisorCount} cold outreach.`);
@@ -125,30 +128,30 @@ ${draft.coverLetterOrEmailBody.substring(0, 450)}...
     }
 
     const message = `
-⚡ *PFE Scout — Bilan Quotidien de Prospection (Cible 30)*
+⚡ <b>PFE Scout — Bilan Quotidien de Prospection (Objectif 30)</b>
 
-🎯 *Objectif quotidien atteint :*
-• Offres de stage publiées qualifiées : *${postedCount} / 10*
-• Contacts chercheurs / superviseurs ciblés : *${supervisorCount} / 20*
-• Total opportunités prêtes pour revue : *${postedCount + supervisorCount} / 30*
+🎯 <b>Statut de la session :</b>
+• Offres de stage publiées qualifiées : <b>${postedCount} / 10</b>
+• Contacts chercheurs / superviseurs ciblés : <b>${supervisorCount} / 20</b>
+• Total opportunités prêtes pour revue : <b>${postedCount + supervisorCount} / 30</b>
 
-🛡️ *Sécurité et contrôle :*
-Aucun email ne sera expédié sans votre clic de validation sur Telegram.
+🛡️ <b>Sécurité et contrôle :</b>
+Toutes les candidatures nécessitent votre validation explicite avant tout envoi d'email depuis votre adresse <code>${this.escapeHtml(env.SMTP_USER)}</code>.
 `.trim();
 
-    return this.postMessage(message);
+    return this.postHtmlMessage(message);
   }
 
   async sendInternshipAlert(item: CanonicalInternship): Promise<boolean> {
     return this.sendDailyDigest(1, 1, [item]);
   }
 
-  private async postMessage(text: string): Promise<boolean> {
+  private async postHtmlMessage(html: string): Promise<boolean> {
     try {
       await axios.post(`${this.botUrl}/sendMessage`, {
         chat_id: env.TELEGRAM_CHAT_ID,
-        text,
-        parse_mode: 'Markdown',
+        text: html,
+        parse_mode: 'HTML',
         disable_web_page_preview: true,
       });
       return true;
@@ -158,8 +161,12 @@ Aucun email ne sera expédié sans votre clic de validation sur Telegram.
     }
   }
 
-  private escapeMarkdown(text: string): string {
-    return text.replace(/[_*\[\]()~`>#+-=|{}.!]/g, '\\$&');
+  private escapeHtml(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 }
 
