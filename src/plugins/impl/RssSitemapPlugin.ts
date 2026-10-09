@@ -1,9 +1,6 @@
 
 import { SourcePlugin } from '../SourcePlugin.js';
-import {
-  CollectedPage,
-  RawInternship,
-} from '../../models/DomainModels.js';
+import { CollectedPage, RawInternship } from '../../models/DomainModels.js';
 import { fetcherService } from '../../pipeline/FetcherService.js';
 import { logger } from '../../utils/logger.js';
 import Parser from 'rss-parser';
@@ -11,8 +8,7 @@ import Parser from 'rss-parser';
 export class RssSitemapPlugin implements SourcePlugin {
   id = 'rss-sitemap';
   name = 'RSS Feed & XML Sitemap Collector';
-  description =
-    'Parses RSS and Atom feeds containing job announcements';
+  description = 'Parses RSS and Atom feeds for job announcements';
 
   private parser = new Parser();
 
@@ -55,7 +51,6 @@ export class RssSitemapPlugin implements SourcePlugin {
     const ignored = [
       'stage',
       'internship',
-      'internship',
       'alternance',
       'cdi',
       'cdd',
@@ -66,24 +61,20 @@ export class RssSitemapPlugin implements SourcePlugin {
       'recherche',
     ];
 
-    const candidates = categories
+    const candidate = categories
       .map((category) => category.trim())
-      .filter(Boolean)
-      .filter(
+      .find(
         (category) =>
+          category.length > 0 &&
           !ignored.includes(category.toLowerCase())
       );
 
-    if (candidates.length === 0) {
-      return 'France';
-    }
-
-    return `${candidates[0]}, France`;
+    // CEA's feed belongs to a French employer. This is a fallback,
+    // not a claim that the city itself has been identified.
+    return candidate ? `${candidate}, France` : 'France';
   }
 
-  async normalize(
-    page: CollectedPage
-  ): Promise<RawInternship[]> {
+  async normalize(page: CollectedPage): Promise<RawInternship[]> {
     const internships: RawInternship[] = [];
 
     if (!page.content) return internships;
@@ -103,26 +94,17 @@ export class RssSitemapPlugin implements SourcePlugin {
           .replace(/\s+/g, ' ')
           .trim();
 
-        const categories = (item.categories || []).map(
-          (category) => String(category)
-        );
-
-        const location = this.inferLocation(categories);
+        const categories = (item.categories || []).map(String);
 
         internships.push({
           title,
           companyName,
-          location,
+          location: this.inferLocation(categories),
           description,
           applyUrl: item.link,
           stipendText: 'Not disclosed',
           deadlineText: item.pubDate || 'Open',
           rawSkills: categories,
-          metadata: {
-            source: page.url,
-            categories,
-            publishedAt: item.pubDate || null,
-          },
         });
       }
 
@@ -142,11 +124,9 @@ export class RssSitemapPlugin implements SourcePlugin {
   async healthCheck(sourceUrl: string): Promise<boolean> {
     try {
       const page = await this.collect(sourceUrl);
-      return (
-        page.statusCode >= 200 &&
+      return page.statusCode >= 200 &&
         page.statusCode < 300 &&
-        page.content.length > 0
-      );
+        page.content.length > 0;
     } catch {
       return false;
     }
