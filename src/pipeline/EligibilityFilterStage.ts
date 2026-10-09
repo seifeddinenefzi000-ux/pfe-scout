@@ -12,9 +12,9 @@ export class EligibilityFilterStage {
     let rejectedCount = 0;
 
     // ------------------------------------------------------------
-    // 1. Explicit Country Exclusions (Tunisia & Germany)
+    // 1. Explicit Exclusions (Tunisia, Germany, USA / North American job boards)
     // ------------------------------------------------------------
-    const excludedCountrySignals = [
+    const excludedLocationSignals = [
       'tunisia',
       'tunisie',
       'tunis',
@@ -30,10 +30,51 @@ export class EligibilityFilterStage {
       'stuttgart',
       'frankfurt',
       'hamburg',
+      'united states',
+      'usa',
+      'us',
+      'california',
+      'texas',
+      'new york',
+      'seattle',
+      'san francisco',
+      'remote us',
     ];
 
     // Allowed / Prioritized target regions: France (Top Priority)
-    const franceSignals = ['france', 'paris', 'toulouse', 'grenoble', 'lyon', 'bordeaux', 'marseille', 'montpellier', 'perpignan', 'odeillo', 'cadarache', 'saclay', 'bourget', 'lille', 'nancy', 'rennes', 'rouen', 'grenoble-inp', 'cnrs', 'cea', 'ines', 'ifpen', 'edf', 'engie', 'cnr'];
+    const franceSignals = [
+      'france',
+      'paris',
+      'toulouse',
+      'grenoble',
+      'lyon',
+      'bordeaux',
+      'marseille',
+      'montpellier',
+      'perpignan',
+      'odeillo',
+      'cadarache',
+      'saclay',
+      'bourget',
+      'lille',
+      'nancy',
+      'rennes',
+      'rouen',
+      'palaiseau',
+      'savoie',
+      'grenoble-inp',
+      'cnrs',
+      'cea',
+      'ines',
+      'ifpen',
+      'edf',
+      'engie',
+      'cnr',
+      'saft',
+      'totalenergies',
+      'neoen',
+      'voltalia',
+    ];
 
     // ------------------------------------------------------------
     // 2. Strict Domain Relevance: Renewable Energy, Storage (BESS, STEP, Mechanical), Microgrid, PV, Thermal
@@ -90,12 +131,15 @@ export class EligibilityFilterStage {
       'matériaux batterie',
     ];
 
-    // Explicitly reject unrelated fields (e.g. Pure nuclear reactor physics, non-energy metallurgy)
+    // Explicitly reject unrelated fields (Pure nuclear neutronics, US software jobs)
     const unrelatedTopicSignals = [
       'neutronique des réacteurs vver',
       'réacteur vver',
       'combustible uox',
-      'physique des réacteurs vver',
+      'software engineer intern (us)',
+      'full stack developer',
+      'frontend developer',
+      'backend developer',
     ];
 
     for (const item of items) {
@@ -105,13 +149,13 @@ export class EligibilityFilterStage {
       const companyLower = (item.companyName || '').toLowerCase();
       const combined = `${titleLower} ${descLower} ${locLower} ${companyLower}`;
 
-      // 1. Strict Exclusions: Tunisia & Germany
-      const isExcludedCountry = excludedCountrySignals.some((sig) => {
+      // 1. Strict Exclusions: Tunisia, Germany, USA
+      const isExcluded = excludedLocationSignals.some((sig) => {
         const regex = new RegExp(`\\b${sig}\\b`, 'i');
         return regex.test(locLower) || (locLower.includes(sig) && !locLower.includes('france'));
       });
 
-      if (isExcludedCountry) {
+      if (isExcluded) {
         logger.info(`Rejected item "${item.title}" due to excluded location: ${item.location}`);
         rejectedCount++;
         continue;
@@ -120,7 +164,7 @@ export class EligibilityFilterStage {
       // 2. Reject pure unrelated topics
       const isUnrelated = unrelatedTopicSignals.some((u) => combined.includes(u));
       if (isUnrelated) {
-        logger.info(`Rejected item "${item.title}" due to unrelated domain (pure nuclear neutronics)`);
+        logger.info(`Rejected item "${item.title}" due to unrelated domain`);
         rejectedCount++;
         continue;
       }
@@ -138,7 +182,7 @@ export class EligibilityFilterStage {
       if (isFrance) {
         item.country = 'France';
       } else {
-        item.country = item.location || 'International';
+        item.country = item.location || 'France';
       }
 
       // 5. Gratification
@@ -153,7 +197,7 @@ export class EligibilityFilterStage {
     }
 
     logger.info(
-      `EligibilityFilterStage: Filtered ${items.length} -> kept ${filtered.length} target PFE offers (Renewables, Storage, STEP, Microgrids, PV, Thermal), rejected ${rejectedCount}.`
+      `EligibilityFilterStage: Filtered ${items.length} -> kept ${filtered.length} target PFE offers, rejected ${rejectedCount}.`
     );
 
     return {

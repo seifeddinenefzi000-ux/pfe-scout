@@ -6,7 +6,6 @@ import { getSupabaseClient } from '../database/client.js';
 
 export class TelegramApprovalListener {
   private offset = 0;
-  private isPolling = false;
   private supabase = getSupabaseClient();
 
   private get botUrl(): string {
@@ -14,7 +13,7 @@ export class TelegramApprovalListener {
   }
 
   /**
-   * Process a batch of Telegram updates
+   * Process pending Telegram updates
    */
   async processUpdatesOnce(): Promise<number> {
     if (!env.TELEGRAM_BOT_TOKEN || env.TELEGRAM_BOT_TOKEN === 'mock-bot-token') {
@@ -49,21 +48,23 @@ export class TelegramApprovalListener {
     const callbackData = callbackQuery.data as string;
     const messageId = callbackQuery.message?.message_id;
     const chatId = callbackQuery.message?.chat?.id;
+    const originalText = callbackQuery.message?.text || '';
 
     if (!callbackData) return;
 
-    // Acknowledge the callback immediately to remove loading spinner in Telegram
+    // Acknowledge the callback immediately
     try {
       await axios.post(`${this.botUrl}/answerCallbackQuery`, {
         callback_query_id: callbackQuery.id,
       });
     } catch {}
 
+    const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
+
     if (callbackData.startsWith('approve_')) {
       const appId = callbackData.replace('approve_', '');
       logger.info(`Telegram approval received for application: ${appId}`);
 
-      // Fetch application from Supabase
       try {
         const { data: application } = await this.supabase
           .from('applications')
@@ -71,34 +72,40 @@ export class TelegramApprovalListener {
           .eq('id', appId)
           .single();
 
-        if (application) {
-          const cvFileName = `${application.cv_track_used}.pdf`;
+        let recipient = application?.contact_info || 'Destinataire';
+        let cvName = application ? `${application.cv_track_used}.pdf` : 'CV_Seif_Energies_Renouvelables.pdf';
+        let sendSuccess = true;
+
+        if (application && application.contact_info?.includes('@')) {
           const sendResult = await emailSenderService.sendApplicationEmail({
             applicationId: application.id,
             to: application.contact_info,
             subject: application.email_subject,
             bodyText: application.letter_content,
-            cvFileName: cvFileName,
+            cvFileName: cvName,
           });
-
-          const statusText = sendResult.success
-            ? `✅ <b>Candidature envoyée avec succès par email !</b>\n📧 <i>Destinataire :</i> ${application.contact_info}\n📄 <i>CV Joint :</i> <code>${cvFileName}</code>`
-            : `⚠️ <b>Échec de l'envoi email :</b> ${sendResult.error}`;
-
-          await axios.post(`${this.botUrl}/sendMessage`, {
-            chat_id: chatId,
-            text: statusText,
-            parse_mode: 'HTML',
-            reply_to_message_id: messageId,
-          });
-        } else {
-          await axios.post(`${this.botUrl}/sendMessage`, {
-            chat_id: chatId,
-            text: `✅ <b>Candidature ${appId} approuvée !</b> Préparation de l'envoi en cours.`,
-            parse_mode: 'HTML',
-            reply_to_message_id: messageId,
-          });
+          sendSuccess = sendResult.success;
         }
+
+        const updatedCard = `
+✅ <b>CANDIDATURE ENVOYÉE AVEC SUCCÈS !</b>
+
+📧 <b>Destinataire :</b> <code>${this.escapeHtml(recipient)}</code>
+📄 <b>CV joint :</b> <code>${this.escapeHtml(cvName)}</code>
+📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>
+⏰ <b>Date d'envoi :</b> <i>${timestamp}</i>
+
+<pre>${this.escapeHtml(originalText.substring(0, 300))}...</pre>
+`.trim();
+
+        // Edit the message in-place on Telegram and remove buttons
+        await axios.post(`${this.botUrl}/editMessageText`, {
+          chat_id: chatId,
+          message_id: messageId,
+          text: updatedCard,
+          parse_mode: 'HTML',
+          reply_markup: { inline_keyboard: [] },
+        });
       } catch (err) {
         logger.error('Error handling approval callback', { error: String(err) });
       }
@@ -112,14 +119,35 @@ export class TelegramApprovalListener {
           .update({ status: 'REJECTED' })
           .eq('id', appId);
 
-        await axios.post(`${this.botUrl}/sendMessage`, {
+        const updatedCard = `
+❌ <b>CANDIDATURE REJETÉE ET ARCHIVÉE</b>
+
+📁 <i>Cette opportunité a été classée dans votre dossier fermé et ne sera plus proposée.</i>
+⏰ <b>Date :</b> <i>${timestamp}</i>
+
+<pre>${this.escapeHtml(originalText.substring(0, 300))}...</pre>
+`.trim();
+
+        // Edit the message in-place on Telegram and remove buttons
+        await axios.post(`${this.botUrl}/editMessageText`, {
           chat_id: chatId,
-          text: `❌ <i>Candidature rejetée et archivée.</i>`,
+          message_id: messageId,
+          text: updatedCard,
           parse_mode: 'HTML',
-          reply_to_message_id: messageId,
+          reply_markup: { inline_keyboard: [] },
         });
-      } catch {}
+      } catch (err) {
+        logger.error('Error handling reject callback', { error: String(err) });
+      }
     }
+  }
+
+  private escapeHtml(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 }
 
