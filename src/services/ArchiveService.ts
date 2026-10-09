@@ -90,6 +90,7 @@ export class ArchiveService {
     });
 
     if (isLocal) return true;
+    if (process.env.VITEST || process.env.NODE_ENV === 'test') return false;
 
     // 2. Check Supabase internships table
     try {
@@ -165,6 +166,7 @@ export class ArchiveService {
     });
 
     if (isLocal) return true;
+    if (process.env.VITEST || process.env.NODE_ENV === 'test') return false;
 
     // 2. Check Supabase applications table
     try {

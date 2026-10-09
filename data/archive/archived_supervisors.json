@@ -1,1 +1,142 @@
-[]
+[
+  {
+    "name": "Dr. Stéphane Grieu",
+    "email": "stephane.grieu@promes.cnrs.fr",
+    "institution": "CNRS PROMES (Procédés, Matériaux et Énergie Solaire) - Perpignan / Odeillo",
+    "searchTopic": "Énergie Solaire, Photovoltaïque & Contrôle Optimal",
+    "archivedAt": "2026-10-09T22:57:24.895Z"
+  },
+  {
+    "name": "Dr. Alexis Vossier",
+    "email": "alexis.vossier@promes.cnrs.fr",
+    "institution": "CNRS PROMES - Laboratoire du Grand Four Solaire d’Odeillo",
+    "searchTopic": "Photovoltaïque Haute Efficacité & Modélisation Solaire",
+    "archivedAt": "2026-10-09T22:57:24.985Z"
+  },
+  {
+    "name": "Dr. Yannick Veschetti",
+    "email": "yannick.veschetti@cea.fr",
+    "institution": "INES (Institut National de l’Énergie Solaire) / CEA LITEN - Le Bourget-du-Lac",
+    "searchTopic": "Technologies Photovoltaïques & Agrivoltaïsme",
+    "archivedAt": "2026-10-09T22:57:24.990Z"
+  },
+  {
+    "name": "Dr. Pere Roca i Cabarrocas",
+    "email": "pere.roca@polytechnique.edu",
+    "institution": "IPVF (Institut Photovoltaïque d’Île-de-France) / LPICM École Polytechnique",
+    "searchTopic": "Photovoltaïque Tandem & Cellules Solaires Avancées",
+    "archivedAt": "2026-10-09T22:57:24.995Z"
+  },
+  {
+    "name": "Dr. Gilles Flamant",
+    "email": "gilles.flamant@promes.cnrs.fr",
+    "institution": "CNRS PROMES - Odeillo Font-Romeu",
+    "searchTopic": "Solaire Concentré (CSP) & Récepteurs Thermiques",
+    "archivedAt": "2026-10-09T22:57:24.999Z"
+  },
+  {
+    "name": "Prof. Mathieu Salanne",
+    "email": "mathieu.salanne@sorbonne-universite.fr",
+    "institution": "RS2E (Réseau sur le Stockage Électrochimique de l’Énergie) / Sorbonne Université",
+    "searchTopic": "Stockage Électrochimique, BESS & Modélisation Électrolyte",
+    "archivedAt": "2026-10-09T22:57:25.004Z"
+  },
+  {
+    "name": "Dr. Fannie Alloin",
+    "email": "fannie.alloin@lepmi.grenoble-inp.fr",
+    "institution": "LEPMI (Laboratoire d’Électrochimie et Physicochimie) - Grenoble INP",
+    "searchTopic": "Stockage par Batterie Tout-Solide & Sodium-Ion",
+    "archivedAt": "2026-10-09T22:57:25.007Z"
+  },
+  {
+    "name": "Dr. Marion Chandesris",
+    "email": "marion.chandesris@cea.fr",
+    "institution": "CEA LITEN (Département des Technologies de l’Énergie Solaire et des Systèmes)",
+    "searchTopic": "Modélisation Électro-Thermique BESS & Durabilité Batteries",
+    "archivedAt": "2026-10-09T22:57:25.011Z"
+  },
+  {
+    "name": "Dr. Vincent Debusschere",
+    "email": "vincent.debusschere@g2elab.grenoble-inp.fr",
+    "institution": "G2Elab (Laboratoire de Génie Électrique de Grenoble) / Grenoble INP",
+    "searchTopic": "STEP (Station de Transfert d’Énergie par Pompage) & Hydro-Stockage",
+    "archivedAt": "2026-10-09T22:57:25.014Z"
+  },
+  {
+    "name": "Prof. Delphine Riu",
+    "email": "delphine.riu@grenoble-inp.fr",
+    "institution": "Grenoble INP - Ense3 / G2Elab",
+    "searchTopic": "STEP à Vitesse Variable & Stabilité du Réseau",
+    "archivedAt": "2026-10-09T22:57:25.019Z"
+  },
+  {
+    "name": "Dr. Nancy Haegel",
+    "email": "nancy.haegel@nrel.gov",
+    "institution": "NREL (National Renewable Energy Laboratory) - Materials Science Center (USA)",
+    "searchTopic": "Terawatt-Scale Photovoltaics & Advanced Solar Materials",
+    "archivedAt": "2026-10-09T22:57:52.451Z"
+  },
+  {
+    "name": "Prof. Jean Mahseredjian",
+    "email": "jean.mahseredjian@polymtl.ca",
+    "institution": "Polytechnique Montréal / Hydro-Québec Power Systems Group (Canada)",
+    "searchTopic": "Microgrid Stability, Hydro Integration & Power System Dynamics",
+    "archivedAt": "2026-10-09T22:57:52.516Z"
+  },
+  {
+    "name": "Prof. Henry Snaith",
+    "email": "henry.snaith@physics.ox.ac.uk",
+    "institution": "University of Oxford - Department of Physics / Clarendon Laboratory (UK)",
+    "searchTopic": "Perovskite Photovoltaics & High-Efficiency Solar Cells",
+    "archivedAt": "2026-10-09T22:57:52.524Z"
+  },
+  {
+    "name": "Prof. Martin Green",
+    "email": "m.green@unsw.edu.au",
+    "institution": "UNSW Sydney - School of Photovoltaic and Renewable Energy Engineering (Australia)",
+    "searchTopic": "Photovoltaic Engineering & World-Record Solar Technologies",
+    "archivedAt": "2026-10-09T22:57:52.527Z"
+  },
+  {
+    "name": "Prof. Christophe Ballif",
+    "email": "christophe.ballif@epfl.ch",
+    "institution": "EPFL (École polytechnique fédérale de Lausanne) - PV-Lab & CSEM (Switzerland)",
+    "searchTopic": "Advanced Photovoltaic Systems & Tandem Solar Heterojunction",
+    "archivedAt": "2026-10-09T22:57:52.531Z"
+  },
+  {
+    "name": "Prof. Daniel Hissel",
+    "email": "daniel.hissel@univ-fcomte.fr",
+    "institution": "FEMTO-ST / FCLAB (Université de Franche-Comté / CNRS)",
+    "searchTopic": "Stockage Mécanique par Volant d’Inertie (Flywheel) & Systèmes Hybrides",
+    "archivedAt": "2026-10-09T22:57:52.534Z"
+  },
+  {
+    "name": "Prof. Bruno Sareni",
+    "email": "bruno.sareni@laplace.univ-tlse.fr",
+    "institution": "LAPLACE (Laboratoire Plasma et Conversion d’Énergie) - CNRS / Toulouse INP",
+    "searchTopic": "Microgrids Autonomes & Gestion d’Énergie EMS",
+    "archivedAt": "2026-10-09T22:57:52.537Z"
+  },
+  {
+    "name": "Prof. Seddik Bacha",
+    "email": "seddik.bacha@g2elab.grenoble-inp.fr",
+    "institution": "G2Elab - Université Grenoble Alpes",
+    "searchTopic": "Microgrids, Convertisseurs de Puissance & Smart Grids",
+    "archivedAt": "2026-10-09T22:57:52.540Z"
+  },
+  {
+    "name": "Prof. William Chueh",
+    "email": "wchueh@stanford.edu",
+    "institution": "Stanford University / Precourt Institute for Energy (USA)",
+    "searchTopic": "Grid-Scale Battery Energy Storage (BESS) & Fast Charging",
+    "archivedAt": "2026-10-09T22:57:52.544Z"
+  },
+  {
+    "name": "Prof. Karim Zaghib",
+    "email": "karim.zaghib@mcgill.ca",
+    "institution": "McGill University / Hydro-Québec IREQ Energy Storage Institute (Canada)",
+    "searchTopic": "Advanced Battery Storage (BESS) for Hydro & Solar Grids",
+    "archivedAt": "2026-10-09T22:57:52.549Z"
+  }
+]
