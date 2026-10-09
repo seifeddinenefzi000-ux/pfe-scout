@@ -11,6 +11,7 @@ import { resumeParserService } from '../services/ResumeParserService.js';
 import { enrichmentService } from '../services/EnrichmentService.js';
 import { applicationTailoringService, ApplicationDraft } from '../services/ApplicationTailoringService.js';
 import { supervisorScoutService } from '../services/SupervisorScoutService.js';
+import { archiveService } from '../services/ArchiveService.js';
 
 import { InternshipRepository } from '../repositories/InternshipRepository.js';
 import { telegramNotifier } from '../notifications/TelegramNotifier.js';
@@ -163,6 +164,11 @@ export const processPipelineTask = task({
       postedDrafts.length,
       supervisorDrafts.length
     );
+
+    // D. Move processed opportunities to the permanent closed archive folder
+    if (eligibleItems.length > 0) {
+      archiveService.archiveOffers(eligibleItems);
+    }
 
     // ------------------------------------------------------------
     // 11. RESULT

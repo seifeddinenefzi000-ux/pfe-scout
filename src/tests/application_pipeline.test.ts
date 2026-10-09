@@ -149,4 +149,25 @@ describe('PFE Scout Core Pipeline Tests', () => {
     expect(hasFemto).toBe(true);
     expect(hasLaplace).toBe(true);
   });
+
+  it('ArchiveService: should archive offers into permanent closed folder and prevent repetition', async () => {
+    const { archiveService } = await import('../services/ArchiveService.js');
+
+    const testOffer: CanonicalInternship = {
+      id: 'test-arch-1',
+      title: 'Stage STEP & Hydroélectricité CNR',
+      companyName: 'CNR',
+      location: 'Lyon, France',
+      applyUrl: 'https://cnr.tm.fr/stage-hydro-unique-123',
+      canonicalUrl: 'https://cnr.tm.fr/stage-hydro-unique-123',
+      contentHash: 'hash-unique-123',
+      isRemote: false,
+      status: 'VERIFIED',
+      createdAt: new Date().toISOString(),
+    };
+
+    // Initially not archived
+    archiveService.archiveOffers([testOffer]);
+    expect(archiveService.isOfferArchived(testOffer)).toBe(true);
+  });
 });

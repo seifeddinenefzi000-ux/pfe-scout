@@ -1,6 +1,7 @@
 import { CanonicalInternship } from '../models/DomainModels.js';
 import { InternshipRepository } from '../repositories/InternshipRepository.js';
 import { ObservabilityRepository } from '../repositories/ObservabilityRepository.js';
+import { archiveService } from '../services/ArchiveService.js';
 import { logger } from '../utils/logger.js';
 
 export class DeduplicationStage {
@@ -16,7 +17,15 @@ export class DeduplicationStage {
     let duplicatesCount = 0;
 
     for (const item of items) {
+      // 1. Check in-memory batch duplicates
       if (seenHashes.has(item.contentHash) || seenUrls.has(item.canonicalUrl)) {
+        duplicatesCount++;
+        continue;
+      }
+
+      // 2. Check permanent closed archive folder (never repeat previous offers)
+      if (archiveService.isOfferArchived(item)) {
+        logger.info(`DeduplicationStage: Skipped previously archived offer "${item.title}"`);
         duplicatesCount++;
         continue;
       }
@@ -27,7 +36,7 @@ export class DeduplicationStage {
     }
 
     if (duplicatesCount > 0) {
-      logger.info(`DeduplicationStage filtered ${duplicatesCount} duplicate internships out of ${items.length}`);
+      logger.info(`DeduplicationStage filtered ${duplicatesCount} duplicate/archived internships out of ${items.length}`);
       await this.observabilityRepo.incrementMetric('deduplication_duplicate_rate', duplicatesCount);
     }
 
