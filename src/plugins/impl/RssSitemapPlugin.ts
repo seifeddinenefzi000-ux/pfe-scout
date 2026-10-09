@@ -1,4 +1,3 @@
-
 import { SourcePlugin } from '../SourcePlugin.js';
 import { CollectedPage, RawInternship } from '../../models/DomainModels.js';
 import { fetcherService } from '../../pipeline/FetcherService.js';
