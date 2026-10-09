@@ -13,9 +13,9 @@ export class EligibilityFilterStage {
     const now = new Date('2026-10-09');
 
     // ------------------------------------------------------------
-    // 1. Explicit Exclusions: Tunisia & Germany
+    // 1. Strict Location Exclusions: Tunisia, Germany, USA / North American job boards
     // ------------------------------------------------------------
-    const excludedCountrySignals = [
+    const excludedLocationSignals = [
       'tunisia',
       'tunisie',
       'tunis',
@@ -31,9 +31,20 @@ export class EligibilityFilterStage {
       'stuttgart',
       'frankfurt',
       'hamburg',
+      'united states',
+      'usa',
+      'california',
+      'texas',
+      'new york',
+      'seattle',
+      'san francisco',
+      'remote us',
+      'us only',
+      'austin',
+      'boston',
+      'chicago',
     ];
 
-    // Allowed Countries: France (Priority), USA, Canada, UK, Australia, Switzerland
     const targetEnergyDomainKeywords = [
       'renouvelable',
       'renewable',
@@ -98,8 +109,8 @@ export class EligibilityFilterStage {
       const companyLower = (item.companyName || '').toLowerCase();
       const combined = `${titleLower} ${descLower} ${locLower} ${companyLower}`;
 
-      // 1. Strict Exclusions: Tunisia & Germany
-      const isExcluded = excludedCountrySignals.some((sig) => {
+      // 1. Strict Exclusions: Tunisia, Germany, USA
+      const isExcluded = excludedLocationSignals.some((sig) => {
         const regex = new RegExp(`\\b${sig}\\b`, 'i');
         return regex.test(locLower) || (locLower.includes(sig) && !locLower.includes('france'));
       });
@@ -137,16 +148,14 @@ export class EligibilityFilterStage {
       }
 
       // 5. Country Tagging
-      if (locLower.includes('usa') || locLower.includes('united states') || locLower.includes('colorado') || companyLower.includes('nrel')) {
-        item.country = 'USA';
-      } else if (locLower.includes('canada') || locLower.includes('quebec') || locLower.includes('montreal') || companyLower.includes('hydro-québec')) {
+      if (locLower.includes('canada') || locLower.includes('quebec') || locLower.includes('montreal') || companyLower.includes('hydro-québec')) {
         item.country = 'Canada';
-      } else if (locLower.includes('uk') || locLower.includes('oxford') || locLower.includes('london') || locLower.includes('imperial')) {
-        item.country = 'UK';
-      } else if (locLower.includes('australia') || locLower.includes('sydney') || locLower.includes('unsw')) {
-        item.country = 'Australia';
       } else if (locLower.includes('switzerland') || locLower.includes('suisse') || locLower.includes('epfl') || locLower.includes('eth')) {
         item.country = 'Switzerland';
+      } else if (locLower.includes('australia') || locLower.includes('sydney') || locLower.includes('unsw')) {
+        item.country = 'Australia';
+      } else if (locLower.includes('uk') || locLower.includes('oxford') || locLower.includes('london')) {
+        item.country = 'UK';
       } else {
         item.country = 'France';
       }
@@ -157,7 +166,7 @@ export class EligibilityFilterStage {
           ? item.stipendText
           : 'Gratification légale (France ~650€ - 1200€/mois)';
       } else {
-        item.stipendText = item.stipendText || 'Research Fellowship / Stipend';
+        item.stipendText = item.stipendText || 'Gratification / Research Stipend';
       }
 
       filtered.push(item);

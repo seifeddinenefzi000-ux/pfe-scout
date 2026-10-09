@@ -48,6 +48,14 @@ export class ArchiveService {
     }
   }
 
+  clearLocalArchive(): void {
+    try {
+      this.ensureArchiveDir();
+      fs.writeFileSync(this.offersArchivePath, JSON.stringify([], null, 2));
+      fs.writeFileSync(this.supervisorsArchivePath, JSON.stringify([], null, 2));
+    } catch {}
+  }
+
   loadArchivedOffers(): ArchivedOfferRecord[] {
     try {
       if (fs.existsSync(this.offersArchivePath)) {

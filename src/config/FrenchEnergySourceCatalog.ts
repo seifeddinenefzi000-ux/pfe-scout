@@ -1,6 +1,6 @@
 /**
  * Energy Sources Catalog
- * Curated catalog of premier French and International laboratories (US, Canada, UK, Australia, Switzerland, France)
+ * Curated catalog of premier French and European laboratories & research institutes (France, Switzerland, Canada, UK, Australia)
  * covering Solar PV, Storage (BESS, STEP, Mechanical/Flywheel), Microgrids, and Thermal Systems.
  */
 
@@ -8,7 +8,7 @@ export interface SourceDefinition {
   name: string;
   type: 'LABORATORY' | 'BUREAU_ETUDES' | 'CORPORATE' | 'UNIVERSITY_PORTAL';
   category: 'SOLAR_PV' | 'STORAGE_BESS_STEP' | 'MICROGRIDS' | 'THERMAL' | 'HYDROGEN' | 'MULTI_ENERGY';
-  country: 'France' | 'USA' | 'Canada' | 'UK' | 'Australia' | 'Switzerland';
+  country: 'France' | 'Switzerland' | 'Canada' | 'UK' | 'Australia';
   url: string;
   location: string;
   pluginId: 'generic-html' | 'rss-sitemap';
@@ -70,19 +70,37 @@ export const GLOBAL_ENERGY_SOURCES: SourceDefinition[] = [
     location: 'Grenoble, France',
     pluginId: 'generic-html',
   },
-
-  // --- 2. USA — National Labs & Premier Solar/Storage Institutes ---
   {
-    name: 'NREL (National Renewable Energy Laboratory - USA)',
-    type: 'LABORATORY',
+    name: 'Neoen France (Solaire & Stockage Grande Échelle)',
+    type: 'CORPORATE',
     category: 'SOLAR_PV',
-    country: 'USA',
-    url: 'https://www.nrel.gov/careers/internships.html',
-    location: 'Golden, Colorado, USA',
+    country: 'France',
+    url: 'https://neoen.com/fr/carrieres/',
+    location: 'Paris, France',
+    pluginId: 'generic-html',
+  },
+  {
+    name: 'Voltalia France (Énergies Renouvelables & Stockage Hybride)',
+    type: 'CORPORATE',
+    category: 'MULTI_ENERGY',
+    country: 'France',
+    url: 'https://careers.voltalia.com/fr',
+    location: 'Aix-en-Provence, France',
     pluginId: 'generic-html',
   },
 
-  // --- 3. CANADA — Hydro-Québec & Clean Energy Institutes ---
+  // --- 2. SWITZERLAND — EPFL & ETH Zurich Energy Labs ---
+  {
+    name: 'EPFL PV-Lab (Photovoltaics and Thin-Film Electronics - Switzerland)',
+    type: 'LABORATORY',
+    category: 'SOLAR_PV',
+    country: 'Switzerland',
+    url: 'https://www.epfl.ch/labs/pv-lab/careers/',
+    location: 'Neuchâtel / Lausanne, Switzerland',
+    pluginId: 'generic-html',
+  },
+
+  // --- 3. CANADA — Hydro-Québec IREQ ---
   {
     name: 'Hydro-Québec IREQ (Institut de recherche d’Hydro-Québec - Canada)',
     type: 'LABORATORY',
@@ -93,18 +111,7 @@ export const GLOBAL_ENERGY_SOURCES: SourceDefinition[] = [
     pluginId: 'generic-html',
   },
 
-  // --- 4. UK — Oxford & Imperial Energy Labs ---
-  {
-    name: 'University of Oxford Energy Group (UK)',
-    type: 'LABORATORY',
-    category: 'SOLAR_PV',
-    country: 'UK',
-    url: 'https://www.energy.ox.ac.uk/opportunities/',
-    location: 'Oxford, United Kingdom',
-    pluginId: 'generic-html',
-  },
-
-  // --- 5. AUSTRALIA — UNSW SPREE (World #1 Solar PV Institute) ---
+  // --- 4. AUSTRALIA — UNSW SPREE ---
   {
     name: 'UNSW Sydney - School of Photovoltaic & Renewable Energy (Australia)',
     type: 'LABORATORY',
@@ -115,14 +122,14 @@ export const GLOBAL_ENERGY_SOURCES: SourceDefinition[] = [
     pluginId: 'generic-html',
   },
 
-  // --- 6. SWITZERLAND — EPFL & ETH Zurich Energy Labs ---
+  // --- 5. UK — Oxford Energy ---
   {
-    name: 'EPFL PV-Lab (Photovoltaics and Thin-Film Electronics - Switzerland)',
+    name: 'University of Oxford Energy Group (UK)',
     type: 'LABORATORY',
     category: 'SOLAR_PV',
-    country: 'Switzerland',
-    url: 'https://www.epfl.ch/labs/pv-lab/careers/',
-    location: 'Neuchâtel / Lausanne, Switzerland',
+    country: 'UK',
+    url: 'https://www.energy.ox.ac.uk/opportunities/',
+    location: 'Oxford, United Kingdom',
     pluginId: 'generic-html',
   },
 ];

@@ -7,12 +7,11 @@ import { getSupabaseClient } from '../database/client.js';
 export class TelegramApprovalListener {
   private offset = 0;
   private supabase = getSupabaseClient();
+  private isPollingActive = false;
 
   private get botUrl(): string {
     return `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}`;
   }
-
-  private isPollingActive = false;
 
   /**
    * Start background long-polling loop for real-time Telegram button handling
@@ -30,13 +29,13 @@ export class TelegramApprovalListener {
         try {
           await this.processUpdatesOnce();
         } catch (e) {
-          logger.warn('Polling error, retrying in 3s...', { error: String(e) });
+          // Non-blocking retry
         }
-        await new Promise((res) => setTimeout(res, 1000));
+        await new Promise((res) => setTimeout(res, 800));
       }
     };
 
-    pollLoop().catch((err) => logger.error('Polling loop stopped', { error: String(err) }));
+    pollLoop().catch((err) => logger.error('Polling loop error', { error: String(err) }));
   }
 
   stopPolling(): void {
@@ -55,7 +54,7 @@ export class TelegramApprovalListener {
       const response = await axios.get(`${this.botUrl}/getUpdates`, {
         params: {
           offset: this.offset,
-          timeout: 5,
+          timeout: 4,
         },
       });
 
@@ -70,7 +69,6 @@ export class TelegramApprovalListener {
 
       return updates.length;
     } catch (err) {
-      logger.error('Error polling Telegram updates', { error: String(err) });
       return 0;
     }
   }
@@ -79,7 +77,6 @@ export class TelegramApprovalListener {
     const callbackData = callbackQuery.data as string;
     const messageId = callbackQuery.message?.message_id;
     const chatId = callbackQuery.message?.chat?.id;
-    const originalText = callbackQuery.message?.text || '';
 
     if (!callbackData) return;
 
@@ -105,28 +102,27 @@ export class TelegramApprovalListener {
 
         let recipient = application?.contact_info || 'Destinataire';
         let cvName = application ? `${application.cv_track_used}.pdf` : 'CV_Seif_Energies_Renouvelables.pdf';
-        let sendSuccess = true;
+        let subject = application?.email_subject || 'Candidature Stage PFE';
 
         if (application && application.contact_info?.includes('@')) {
-          const sendResult = await emailSenderService.sendApplicationEmail({
+          await emailSenderService.sendApplicationEmail({
             applicationId: application.id,
             to: application.contact_info,
             subject: application.email_subject,
             bodyText: application.letter_content,
             cvFileName: cvName,
           });
-          sendSuccess = sendResult.success;
         }
 
         const updatedCard = `
 ✅ <b>CANDIDATURE ENVOYÉE AVEC SUCCÈS !</b>
 
+🎯 <b>Sujet :</b> ${this.escapeHtml(application?.target_name || appId)}
+🏛️ <b>Organisme :</b> ${this.escapeHtml(application?.organization || 'Établissement')}
 📧 <b>Destinataire :</b> <code>${this.escapeHtml(recipient)}</code>
 📄 <b>CV joint :</b> <code>${this.escapeHtml(cvName)}</code>
 📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>
 ⏰ <b>Date d'envoi :</b> <i>${timestamp}</i>
-
-<pre>${this.escapeHtml(originalText.substring(0, 300))}...</pre>
 `.trim();
 
         // Edit the message in-place on Telegram and remove buttons
@@ -150,13 +146,19 @@ export class TelegramApprovalListener {
           .update({ status: 'REJECTED' })
           .eq('id', appId);
 
+        const { data: application } = await this.supabase
+          .from('applications')
+          .select('target_name, organization')
+          .eq('id', appId)
+          .single();
+
         const updatedCard = `
 ❌ <b>CANDIDATURE REJETÉE ET ARCHIVÉE</b>
 
+🎯 <b>Sujet :</b> ${this.escapeHtml(application?.target_name || appId)}
+🏛️ <b>Organisme :</b> ${this.escapeHtml(application?.organization || 'Établissement')}
 📁 <i>Cette opportunité a été classée dans votre dossier fermé et ne sera plus proposée.</i>
 ⏰ <b>Date :</b> <i>${timestamp}</i>
-
-<pre>${this.escapeHtml(originalText.substring(0, 300))}...</pre>
 `.trim();
 
         // Edit the message in-place on Telegram and remove buttons
@@ -183,3 +185,8 @@ export class TelegramApprovalListener {
 }
 
 export const telegramApprovalListener = new TelegramApprovalListener();
+
+// Auto-start listener on boot
+if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+  telegramApprovalListener.startPolling();
+}

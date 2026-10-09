@@ -1,10 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { EligibilityFilterStage } from '../pipeline/EligibilityFilterStage.js';
 import { CanonicalInternship } from '../models/DomainModels.js';
 import { applicationTailoringService } from '../services/ApplicationTailoringService.js';
 import { supervisorScoutService } from '../services/SupervisorScoutService.js';
+import { archiveService } from '../services/ArchiveService.js';
 
 describe('PFE Scout Core Pipeline Tests', () => {
+  beforeEach(() => {
+    archiveService.clearLocalArchive();
+  });
   it('EligibilityFilter: should exclude Tunisia and Germany, and accept & prioritize France', () => {
     const filter = new EligibilityFilterStage();
 
