@@ -302,20 +302,17 @@ export class ApplicationTailoringService {
       subject = `Candidature - ${cleanTitle} - Seif Eddine Nefzi`;
       emailBody = `${salutation}
 
-Je vous adresse ma candidature pour l'offre « ${cleanTitle} » chez ${cleanCompany}. Je suis en dernière année du cycle ingénieur en Génie Énergétique, spécialité Énergies Renouvelables, à l'ENIM (École Nationale d'Ingénieurs de Monastir), en parallèle d'un Master de recherche en Gestion des Systèmes Énergétiques, et je suis disponible pour 4 à 6 mois à partir de janvier 2027.
+Je vous adresse ma candidature pour l'offre « ${cleanTitle} » au sein de ${cleanCompany}.
 
-Votre offre correspond à mon parcours sur les points essentiels :
-${bullets.join('\n')}
+Actuellement en dernière année du cycle ingénieur en Génie Énergétique à l'ENIM (École Nationale d'Ingénieurs de Monastir), en parallèle d'un Master de recherche en Gestion des Systèmes Énergétiques, je suis disponible pour un stage de fin d'études de 4 à 6 mois à partir de janvier 2027. Mes travaux en simulation de systèmes énergétiques (Python avec FastAPI, MATLAB) et optimisation correspondent étroitement aux compétences requises pour ce sujet.
 
-Ce qui m'attire dans cette offre, c'est le travail sur ${cleanTitle}, directement relié à mes compétences en simulation et dimensionnement de systèmes énergétiques.
+Vous trouverez ci-joint mon CV ainsi que ma lettre de motivation détaillée. Je serais ravi d'échanger avec vous lors d'un entretien à votre convenance.
 
-Vous trouverez ci-joint mon CV et ma lettre de motivation. Je serais ravi de vous présenter ma candidature lors d'un entretien, à la date qui vous conviendrait.
-
-Je vous remercie de l'attention portée à ma candidature.
+Je vous remercie pour l'attention portée à ma candidature.
 
 Bien cordialement,
 Seif Eddine Nefzi
-ENIM (École Nationale d'Ingénieurs de Monastir) - Génie Énergétique
+ENIM - Génie Énergétique
 (+216) 20 016 808
 seifeddinenefzi000@gmail.com
 linkedin.com/in/nefzi-seifeddine`;
@@ -324,20 +321,17 @@ linkedin.com/in/nefzi-seifeddine`;
       subject = `Application - ${cleanTitle} - Seif Eddine Nefzi`;
       emailBody = `${salutationEn}
 
-I am applying for the ${cleanTitle} role at ${cleanCompany}. I am in my final year of the Engineering Degree in Energy Engineering (Renewable Energies track) at ENIM (National Engineering School of Monastir), alongside a Research Master's in Energy Systems Management, and I am available for 4 to 6 months from January 2027.
+I am writing to submit my application for the ${cleanTitle} position at ${cleanCompany}.
 
-Your offer matches my background on the points that matter most:
-${bullets.join('\n')}
+Currently in my final year of the Energy Engineering Degree at ENIM (National Engineering School of Monastir) alongside a Research Master's in Energy Systems Management, I am available for a 4 to 6-month graduation internship starting January 2027. My background in energy systems simulation (Python with FastAPI, MATLAB) and optimization aligns closely with the objectives of this role.
 
-What attracts me in this offer is the focus on ${cleanTitle}, which is closely aligned with my work in simulation and energy systems modelling.
-
-Please find attached my CV and my cover letter. I would be glad to discuss my application in an interview, at a time that suits you.
+Please find attached my CV and detailed cover letter. I would welcome the opportunity to discuss my application in an interview at your convenience.
 
 Thank you for your time and consideration.
 
 Kind regards,
 Seif Eddine Nefzi
-ENIM (National Engineering School of Monastir) - Energy Engineering
+ENIM - Energy Engineering
 (+216) 20 016 808
 seifeddinenefzi000@gmail.com
 linkedin.com/in/nefzi-seifeddine`;
