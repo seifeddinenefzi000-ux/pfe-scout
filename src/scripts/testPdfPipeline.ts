@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { env } from '../config/env.js';
 import { applicationTailoringService } from '../services/ApplicationTailoringService.js';
 import { telegramNotifier } from '../notifications/TelegramNotifier.js';
 import { CanonicalInternship } from '../models/DomainModels.js';
@@ -36,9 +37,10 @@ Laboratoire LITEN, INES`,
     metadata: {
       isPdfOffer: true,
       supervisorName: 'Dr. Stéphane Averty',
-      supervisorEmail: 'stephane.averty@cea.fr',
-      contactEmail: 'stephane.averty@cea.fr',
+      supervisorEmail: env.SMTP_USER, // Mode test : envoyé directement à votre adresse pour validation sans bounce 550
+      contactEmail: env.SMTP_USER,
       isDirectEmail: true,
+      isTestOffer: true,
     },
   };
 
@@ -58,7 +60,7 @@ Laboratoire LITEN, INES`,
   if (sent) {
     console.log('\n✅ SUCCÈS ! La carte interactive a été envoyée sur votre Telegram.');
     console.log('👉 Ouvrez votre Telegram et appuyez sur : [✅ Approuver & Envoyer à l\'Organisme]');
-    console.log('👉 Le bot expédiera la candidature directement à l\'encadrant du sujet : Dr. Stéphane Averty (stephane.averty@cea.fr) !');
+    console.log(`👉 En mode test, le bot expédiera le dossier complet directement sur votre boîte (${env.SMTP_USER}) pour inspection sans bounce !`);
   } else {
     console.log('❌ Échec de l\'envoi Telegram. Vérifiez vos identifiants bot.');
   }
