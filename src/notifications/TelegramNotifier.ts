@@ -77,13 +77,27 @@ Consultez les fiches détaillées ci-dessous et cliquez sur <b>Approuver</b> pou
       : '📋 <b>OFFRE DE STAGE PFE PUBLIÉE</b>';
 
     const letterName = draft.coverLetterPdfName || (draft.language === 'FR' ? 'Lettre_Motivation_Seif_Eddine_Nefzi.pdf' : 'Cover_Letter_Seif_Eddine_Nefzi.pdf');
+    const isDirectEmail = Boolean(draft.targetContact && draft.targetContact.includes('@'));
+    const contactLine = isDirectEmail
+      ? `👤 <b>Destinataire Direct :</b> <code>${this.escapeHtml(draft.targetContact)}</code>\n🚀 <b>Mode :</b> 📨 Candidature directe par Email`
+      : `🌐 <b>Portail Web :</b> <a href="${this.escapeHtml(draft.targetContact)}">${this.escapeHtml(draft.targetContact)}</a>\nℹ️ <b>Mode :</b> 🌐 Candidature via formulaire / portail de l'organisme`;
+
+    const buttonRow: any[] = [];
+    if (isDirectEmail) {
+      buttonRow.push({ text: '✅ Approuver & Envoyer à l\'Organisme', callback_data: `approve_${draft.id}` });
+    } else {
+      buttonRow.push({ text: '🌐 Ouvrir Portail', url: draft.targetContact });
+      buttonRow.push({ text: '📥 M\'envoyer le Pack', callback_data: `approve_${draft.id}` });
+    }
+    buttonRow.push({ text: '❌ Rejeter', callback_data: `reject_${draft.id}` });
+
     const message = `
 ${header}
 
 🎯 <b>Sujet :</b> ${this.escapeHtml(draft.targetTitle)}
 🏛️ <b>Établissement / Lab :</b> ${this.escapeHtml(draft.targetOrganization)}
 📍 <b>Pays :</b> ${this.escapeHtml(draft.targetCountry)}
-👤 <b>Contact :</b> ${this.escapeHtml(draft.targetContact)}
+${contactLine}
 
 📎 <b>Documents joints :</b>
 • <code>${this.escapeHtml(draft.cvAttachmentName || 'cv_Seif_Eddine_Nefzi.pdf')}</code>
@@ -96,12 +110,7 @@ ${header}
 `.trim();
 
     const inlineKeyboard = {
-      inline_keyboard: [
-        [
-          { text: '✅ Approuver & Envoyer Email', callback_data: `approve_${draft.id}` },
-          { text: '❌ Rejeter', callback_data: `reject_${draft.id}` },
-        ],
-      ],
+      inline_keyboard: [buttonRow],
     };
 
     try {

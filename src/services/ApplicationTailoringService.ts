@@ -95,6 +95,54 @@ export class ApplicationTailoringService {
   }
 
   /**
+   * Resolve best direct contact email or application URL for a published offer
+   */
+  resolveOfferContact(offer: CanonicalInternship): string {
+    // 1. Check if applyUrl is a direct mailto: link
+    if (offer.applyUrl && offer.applyUrl.startsWith('mailto:')) {
+      const email = offer.applyUrl.replace('mailto:', '').split('?')[0].trim();
+      if (email.includes('@')) return email;
+    }
+
+    // 2. Scan offer description for an explicit recruiter or supervisor email
+    const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
+    const descMatches = (offer.description || '').match(emailRegex);
+    if (descMatches && descMatches.length > 0) {
+      const candidateEmail = descMatches.find((e) => !e.includes('nefzi') && !e.includes('gmail.com'));
+      if (candidateEmail) return candidateEmail;
+    }
+
+    // 3. Known laboratory and company recruitment / internship directories
+    const companyLower = (offer.companyName || '').toLowerCase();
+    const titleLower = (offer.title || '').toLowerCase();
+
+    const knownDirectory: Record<string, string> = {
+      'ines': 'recrutement.liten@cea.fr',
+      'cea': 'recrutement-etudiants@cea.fr',
+      'cnrs': 'stages-recherche@cnrs.fr',
+      'promes': 'contact@promes.cnrs.fr',
+      'epfl': 'pvlab@epfl.ch',
+      'sotulub': 'direction.technique@sotulub.com.tn',
+      'zenith': 'contact@zenith-solar.com',
+      'ctkcp': 'rh@ctkcp.com',
+      'edf': 'stages-recrutement@edf.fr',
+      'engie': 'carrieres.france@engie.com',
+      'total': 'carrieres@totalenergies.com',
+      'schneider': 'fr-carrieres@schneider-electric.com',
+      'renac': 'info@renac.de',
+    };
+
+    for (const [key, email] of Object.entries(knownDirectory)) {
+      if (companyLower.includes(key) || titleLower.includes(key)) {
+        return email;
+      }
+    }
+
+    // 4. Fallback to applyUrl / canonicalUrl
+    return offer.applyUrl || offer.canonicalUrl || '';
+  }
+
+  /**
    * Select 2-3 matched requirement bullets for published offer (Section 4 menu)
    */
   private selectPublishedOfferBullets(combinedText: string, language: 'FR' | 'EN'): string[] {
@@ -270,7 +318,7 @@ linkedin.com/in/nefzi-seifeddine`;
       language,
       targetTitle: cleanTitle,
       targetOrganization: cleanCompany,
-      targetContact: offer.applyUrl || offer.canonicalUrl,
+      targetContact: this.resolveOfferContact(offer),
       targetCountry: offer.country || 'France',
       sourceResumePath: resumeSourcePath,
       cvAttachmentName,

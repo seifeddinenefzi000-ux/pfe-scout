@@ -15,6 +15,7 @@ export interface SendApplicationOptions {
   coverLetterPath?: string;
   coverLetterName?: string;
   replyTo?: string;
+  bcc?: string;
 }
 
 export interface SendApplicationResult {
@@ -145,7 +146,7 @@ export class EmailSenderService {
 
     try {
       const transporter = this.getTransporter();
-      const mailOptions = {
+      const mailOptions: any = {
         from: `"${env.SMTP_SENDER_NAME}" <${env.SMTP_USER}>`,
         to,
         replyTo: replyTo || env.SMTP_USER,
@@ -154,6 +155,10 @@ export class EmailSenderService {
         html: htmlBody,
         attachments,
       };
+
+      if (options.bcc) {
+        mailOptions.bcc = options.bcc;
+      }
 
       const info = await transporter.sendMail(mailOptions);
       logger.info(`✅ Successfully dispatched application email to ${to}`, {

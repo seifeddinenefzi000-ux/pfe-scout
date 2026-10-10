@@ -236,13 +236,13 @@ export class LatexCoverLetterService {
       );
     }
 
-    // Enforce 100% black text and eliminate all blue draft styling
+    // Enforce 100% black text, disable highlight switch and ensure \ph is a clean identity macro
     templateContent = templateContent
-      .replace(/\\highlighttrue/g, '\\highlightfalse')
       .replace(
-        '\\newcommand{\\ph}[1]{\\ifhighlight\\textcolor{blue}{#1}\\else #1\\fi}',
-        '\\newcommand{\\ph}[1]{#1}'
-      );
+        /\\newif\\ifhighlight[\s\S]*?\\newcommand\{\\ph\}\[1\].*?(\r?\n)/,
+        '\\newif\\ifhighlight\n\\highlightfalse\n\\newcommand{\\ph}[1]{#1}$1'
+      )
+      .replace(/\\highlighttrue/g, '\\highlightfalse');
 
     const combinedTopic = `${positionTitle} ${organization} ${topicText || ''}`;
     const hookInfo = this.chooseHook(combinedTopic, language);

@@ -151,6 +151,7 @@ export class TelegramApprovalListener {
         const sendRes = await emailSenderService.sendApplicationEmail({
           applicationId: appId,
           to: targetEmail,
+          bcc: isDirectEmail ? env.SMTP_USER : undefined,
           subject: targetSubject,
           bodyText: targetBody,
           sourceCvPath: draft?.sourceResumePath,
@@ -182,13 +183,21 @@ export class TelegramApprovalListener {
 
           const attachmentsText = (sendRes.attachmentsSent || ['cv_Seif_Eddine_Nefzi.pdf']).map((a) => `• 📎 <code>${this.escapeHtml(a)}</code>`).join('\n');
 
+          const statusTitle = isDirectEmail
+            ? '✅ <b>CANDIDATURE EXPÉDIÉE DIRECTEMENT À L\'ORGANISME !</b>'
+            : '📥 <b>DOSSIER COMPLET TRANSMIS PAR EMAIL POUR POSTULATION SUR PORTAIL !</b>';
+
+          const noteBcc = isDirectEmail
+            ? `\n📋 <b>Copie reçue (BCC) :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>`
+            : '';
+
           const updatedCard = `
-✅ <b>CANDIDATURE APPROUVÉE & EXPÉDIÉE AVEC SUCCÈS !</b>
+${statusTitle}
 
 🎯 <b>Sujet :</b> ${this.escapeHtml(targetTitle)}
 🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
 📧 <b>Destinataire :</b> <code>${this.escapeHtml(targetEmail)}</code>
-📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>
+📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>${noteBcc}
 📨 <b>Message ID :</b> <code>${this.escapeHtml(sendRes.messageId || 'dispatch-ok')}</code>
 
 <b>Documents joints :</b>
