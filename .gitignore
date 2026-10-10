@@ -11,4 +11,6 @@ coverage/
 resume.pdf
 data/generated_letters/
 data/drafts/
-
+data/audit/
+data/deep_research/
+*.traineddata

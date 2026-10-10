@@ -20,6 +20,7 @@
     "bot:listen": "tsx src/scripts/runApprovalDaemon.ts",
     "test:pdf": "tsx src/scripts/testPdfPipeline.ts",
     "scout": "tsx src/scripts/runScoutJob.ts",
+    "scout:deep": "tsx src/scripts/runDeepScout.ts",
     "lint": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\""
   },
@@ -47,6 +48,7 @@
     "nodemailer": "^10.0.16",
     "playwright": "^1.50.1",
     "rss-parser": "^3.13.0",
+    "tesseract.js": "^7.0.0",
     "unpdf": "^1.8.1",
     "xlsx": "^0.18.5",
     "zod": "^3.24.2"
