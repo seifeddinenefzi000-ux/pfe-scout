@@ -27,7 +27,9 @@ export class EmailSenderService {
     if (!this.transporter) {
       const cleanPass = (env.SMTP_PASS || '').replace(/\s+/g, '');
       this.transporter = nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
         auth: {
           user: env.SMTP_USER,
           pass: cleanPass,

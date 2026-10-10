@@ -122,15 +122,31 @@ export class TelegramApprovalListener {
           } catch {}
         }
 
-        if (recipient && recipient.includes('@')) {
-          await emailSenderService.sendApplicationEmail({
+        let isDirectEmail = Boolean(recipient && recipient.includes('@'));
+        let emailSent = false;
+
+        if (isDirectEmail) {
+          // Direct email to supervisor / researcher
+          const sendRes = await emailSenderService.sendApplicationEmail({
             applicationId: appId,
             to: recipient,
             subject,
             bodyText: body,
             cvFileName: cvName,
           });
-          logger.info(`✅ Email dispatched to ${recipient} with attachment ${cvName}`);
+          emailSent = sendRes.success;
+          logger.info(`✅ Direct email dispatched to ${recipient} with attachment ${cvName}`);
+        } else {
+          // Posted web offer: send candidate package copy to user's email
+          const sendRes = await emailSenderService.sendApplicationEmail({
+            applicationId: appId,
+            to: env.SMTP_USER,
+            subject: `[Dossier Prêt] ${subject}`,
+            bodyText: `Bonjour Seif,\n\nVoici votre dossier prêt pour l'offre "${targetName}" chez ${orgName}.\nLien pour postuler : ${recipient}\n\n--- Lettre de motivation personnalisée ---\n\n${body}`,
+            cvFileName: cvName,
+          });
+          emailSent = sendRes.success;
+          logger.info(`✅ Application package copy sent to ${env.SMTP_USER}`);
         }
 
         try {
@@ -141,14 +157,14 @@ export class TelegramApprovalListener {
         } catch {}
 
         const updatedCard = `
-✅ <b>CANDIDATURE ENVOYÉE AVEC SUCCÈS !</b>
+✅ <b>CANDIDATURE APPROUVÉE AVEC SUCCÈS !</b>
 
 🎯 <b>Sujet :</b> ${this.escapeHtml(targetName)}
 🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
-📧 <b>Destinataire :</b> <code>${this.escapeHtml(recipient || 'Candidature enregistrée')}</code>
+📧 <b>Destinataire :</b> <code>${this.escapeHtml(isDirectEmail ? recipient : `${env.SMTP_USER} (Copie dossier & lien)`)}</code>
 📄 <b>CV joint :</b> <code>${this.escapeHtml(cvName)}</code>
 📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>
-⏰ <b>Date d'envoi :</b> <i>${timestamp}</i>
+⏰ <b>Date de traitement :</b> <i>${timestamp}</i>
 `.trim();
 
         // Edit the message in-place on Telegram and remove buttons
