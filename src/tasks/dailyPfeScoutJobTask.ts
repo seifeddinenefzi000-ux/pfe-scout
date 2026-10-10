@@ -1,5 +1,5 @@
 import { schedules, task } from '@trigger.dev/sdk';
-import { crawlSourcesTask } from './crawlSourcesTask.js';
+import { runCrawlSources, crawlSourcesTask } from './crawlSourcesTask.js';
 import { supervisorScoutService } from '../services/SupervisorScoutService.js';
 import { telegramNotifier } from '../notifications/TelegramNotifier.js';
 import { logger } from '../utils/logger.js';
@@ -18,7 +18,7 @@ export async function executeAutonomousPipeline(): Promise<{
   // 1. Run live crawling across all registered French energy and international sources
   let crawledResult: any = null;
   try {
-    crawledResult = await crawlSourcesTask.triggerAndWait();
+    crawledResult = await runCrawlSources();
     logger.info('✓ Crawl sources completed successfully', { crawledResult });
   } catch (err) {
     logger.error('Error during crawl-sources execution', { error: String(err) });

@@ -20,28 +20,25 @@ import { RawInternship } from '../models/DomainModels.js';
 import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 
-interface ProcessPipelinePayload {
+export interface ProcessPipelinePayload {
   rawItems: RawInternship[];
   sourceId?: string;
   runSupervisorOutreach?: boolean;
 }
 
-export const processPipelineTask = task({
-  id: 'process-pipeline',
-
-  run: async (payload: ProcessPipelinePayload) => {
-    if (!payload || !Array.isArray(payload.rawItems)) {
-      throw new Error(
-        'Invalid process-pipeline payload: rawItems must be an array.'
-      );
-    }
-
-    logger.info(
-      `Starting PFE Scout international pipeline for ${payload.rawItems.length} raw items (France Prioritized, TN/DE excluded)`,
-      {
-        sourceId: payload.sourceId,
-      }
+export async function runProcessPipeline(payload: ProcessPipelinePayload) {
+  if (!payload || !Array.isArray(payload.rawItems)) {
+    throw new Error(
+      'Invalid process-pipeline payload: rawItems must be an array.'
     );
+  }
+
+  logger.info(
+    `Starting PFE Scout international pipeline for ${payload.rawItems.length} raw items (France Prioritized, TN/DE excluded)`,
+    {
+      sourceId: payload.sourceId,
+    }
+  );
 
     // ------------------------------------------------------------
     // 1. NORMALIZATION
@@ -187,5 +184,12 @@ export const processPipelineTask = task({
       topRankedCompany: ranked[0]?.companyName ?? null,
       topRankedCountry: ranked[0]?.country ?? null,
     };
+}
+
+export const processPipelineTask = task({
+  id: 'process-pipeline',
+  run: async (payload: ProcessPipelinePayload) => {
+    return await runProcessPipeline(payload);
   },
 });
+

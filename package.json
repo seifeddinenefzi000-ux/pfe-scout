@@ -16,6 +16,7 @@
     "telegram:test": "tsx src/scripts/testTelegram.ts",
     "resume:test": "tsx src/scripts/testResume.ts",
     "pipeline:run": "tsx src/scripts/runPipeline.ts",
+    "scout": "tsx src/scripts/runScoutJob.ts",
     "lint": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\""
   },
