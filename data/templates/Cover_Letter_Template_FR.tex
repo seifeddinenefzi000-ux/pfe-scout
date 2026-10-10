@@ -1,0 +1,186 @@
+%% =====================================================================
+%%  MODELE DE LETTRE DE MOTIVATION (FR) - Seif Eddine Nefzi
+%%  Structure : 1) Accroche + pourquoi cette offre  2) Preuves
+%%              3) Ce que je cherche + ce que j'apporte  4) Conclusion sincere
+%%
+%%  UTILISATION POUR CHAQUE OFFRE
+%%   1. Modifier UNIQUEMENT le bloc "A PERSONNALISER" ci-dessous.
+%%   2. Texte bleu = a verifier ou remplacer pour cette offre.
+%%      Texte entre [crochets] = a remplacer obligatoirement.
+%%   3. Une fois termine, mettre \highlightfalse (quelques lignes plus bas)
+%%      pour tout imprimer en noir, puis recompiler.
+%%
+%%  CONSEILS
+%%   - ACCROCHE : choisir l'histoire qui correspond a l'offre en modifiant
+%%     la ligne  \newcommand{\hook}{...}  (options : \hookENIM, \hookEMS,
+%%     \hookActuator, \hookTracker, \hookIndustry) ou ecrire la votre.
+%%   - Garder UNE phrase du paragraphe 1 vraiment specifique a
+%%     l'organisation (un projet, une mission, un resultat).
+%%   - Choisir les 2-3 experiences les plus pertinentes pour CETTE offre.
+%%   - SIGLES : toujours donner le nom complet a la premiere utilisation.
+%%     Pour ENIM, EMS, CTKCP et SOTULUB utiliser \enim{}, \ems{}, \ctkcp{},
+%%     \sotulub{} : le nom complet apparait automatiquement la premiere
+%%     fois seulement. Pour un autre sigle : \acro{cle}{SIGLE}{Nom complet}.
+%%   - Rester sur une seule page.
+%%
+%%  MENU D'EXPERIENCES (a copier selon l'offre)
+%%   - dimensionnement d'installations photovoltaiques et etudes techniques chez Zenith Solar Engineering
+%%   - analyse de production sur un champ petrolier chez \ctkcp{}
+%%   - etudes d'efficacite energetique et de recuperation de chaleur fatale chez \sotulub{}
+%%   - simulation energetique et dimensionnement de batiments chez EcoBuilding Consulting
+%%   - un systeme de gestion d'energie de microreseau comparant quatre methodes
+%%     d'optimisation (programmation dynamique, algorithme genetique,
+%%     optimisation par essaim de particules, programmation lineaire)
+%%   - un suiveur solaire a actionneur unique concu pour l'IEEE (Institute of
+%%     Electrical and Electronics Engineers) Zucker Undergraduate Design Contest
+%%   - formations en stockage par batteries et en IA pour les energies
+%%     renouvelables chez RENAC (Renewables Academy)
+%% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[a4paper,left=1in,right=1in,top=0.9in,bottom=0.9in]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{parskip}
+\usepackage[hidelinks]{hyperref}
+
+\pagestyle{empty}
+
+%% ---------------------------------------------------------------------
+%%  INTERRUPTEUR : \highlighttrue = champs en bleu (brouillon/modele)
+%%                 \highlightfalse = tout en noir (version finale)
+%% ---------------------------------------------------------------------
+\newif\ifhighlight
+\highlighttrue
+\newcommand{\ph}[1]{\ifhighlight\textcolor{blue}{#1}\else #1\fi}
+
+%% ---------------------------------------------------------------------
+%%  AIDE SIGLES : le nom complet apparait a la premiere utilisation
+%%  \acro{cle}{SIGLE}{Nom complet}
+%% ---------------------------------------------------------------------
+\newcommand{\acro}[3]{%
+  \ifcsname acrodone@#1\endcsname
+    #2%
+  \else
+    #2 (#3)%
+    \expandafter\gdef\csname acrodone@#1\endcsname{}%
+  \fi}
+\newcommand{\enim}{\acro{enim}{ENIM}{École Nationale d'Ingénieurs de Monastir}}
+\newcommand{\ems}{\acro{ems}{EMS}{Energy Management System, système de gestion d'énergie}}
+\newcommand{\ctkcp}{\acro{ctkcp}{CTKCP}{Compagnie Tuniso-Koweito-Chinoise de Pétrole}}
+\newcommand{\sotulub}{\acro{sotulub}{SOTULUB}{Société Tunisienne des Lubrifiants}}
+
+%% =====================================================================
+%%  A PERSONNALISER
+%% =====================================================================
+
+% --- Vos informations (a modifier si besoin) ---
+\newcommand{\myname}{Seif Eddine Nefzi}
+\newcommand{\myaddress}{Menzel Bourguiba, Tunisie}
+\newcommand{\myphone}{(+216) 20 016 808}
+\newcommand{\myemail}{nefzi.seifeddine@enim.u-monastir.tn}
+
+% --- Optionnel : logo de l'entreprise en haut a droite, par ex.
+%     \newcommand{\companylogo}{\includegraphics[width=4.5cm]{logo.png}}
+\newcommand{\companylogo}{}
+
+% --- Date optionnelle (laisser vide pour l'omettre), par ex. {Octobre 2026}
+\newcommand{\letterdate}{}
+
+% --- Destinataire (utiliser \\ entre les lignes) ---
+\newcommand{\recipientblock}{%
+  \ph{[Responsable du recrutement / Equipe RH]}\\
+  \ph{[Organisation]}\\
+  \ph{[Ville, Pays]}}
+
+% --- L'offre ---
+\newcommand{\org}{\ph{[Organisation]}}
+\newcommand{\position}{\ph{[intitulé du poste]}}
+\newcommand{\opportunity}{\ph{stage de fin d'études de 4 à 6 mois}}
+\newcommand{\salutation}{\ph{Madame, Monsieur,}}   % ou : Madame/Monsieur [Nom],
+
+% --- Paragraphe 1 : ACCROCHE (choisir l'histoire qui correspond a l'offre) ---
+\newcommand{\hookENIM}{\ph{Depuis que j'ai rejoint \enim{}, une question ne m'a jamais quitté : comment rendre nos systèmes énergétiques réellement plus efficaces, et pas seulement sur le papier.}}
+\newcommand{\hookEMS}{\ph{Depuis que je construis un \ems{} pour un microréseau hybride, une question ne m'a jamais quitté : comment faire travailler ensemble, de façon plus intelligente, l'énergie que nous produisons, stockons et consommons, et pas seulement sur le papier.}}
+\newcommand{\hookActuator}{\ph{Depuis que j'ai conçu un suiveur solaire à actionneur unique, qui suit le soleil avec un seul moteur au lieu de deux, une question ne m'a jamais quitté : comment tirer plus d'énergie d'un matériel plus simple, et pas seulement sur le papier.}}
+\newcommand{\hookTracker}{\ph{Depuis que j'ai conçu mon premier suiveur solaire à \enim{}, une question ne m'a jamais quitté : comment rendre nos systèmes énergétiques réellement plus efficaces, et pas seulement sur le papier.}}
+\newcommand{\hookIndustry}{\ph{Depuis que j'ai étudié la récupération de chaleur fatale chez \sotulub{}, une question ne m'a jamais quitté : combien d'énergie gaspillons-nous encore dans l'industrie, et comment la récupérer ?}}
+
+\newcommand{\hook}{\hookENIM}   % <-- CHOISIR : \hookENIM, \hookEMS, \hookActuator, \hookTracker, \hookIndustry
+
+% --- Paragraphe 1 : pourquoi CETTE organisation (une phrase concrete) ---
+\newcommand{\whyorg}{\ph{[une phrase concrète sur ce qui vous attire dans cette organisation, ce projet ou cette mission, en lien avec votre parcours]}}
+
+% --- Paragraphe 2 : preuves (2-3 elements du menu ci-dessus) ---
+\newcommand{\experiences}{\ph{le dimensionnement d'installations photovoltaïques chez Zenith Solar Engineering, l'analyse de production sur un champ pétrolier chez \ctkcp{}, et des études d'efficacité énergétique et de récupération de chaleur fatale chez \sotulub{}}}
+\newcommand{\prototypes}{\ph{d'un suiveur solaire bi-axial à un système de gestion d'énergie pour microréseau comparant quatre méthodes d'optimisation}}
+
+% --- Paragraphe 3 : ce que vous cherchez et ce que vous apportez ---
+\newcommand{\goal}{\ph{une immersion dans [type de travail, p. ex. recherche appliquée, ingénierie de terrain, gestion d'énergie] où je pourrai mettre mon profil d'ingénieur en énergie au service de [type de projets, p. ex. projets concrets de transition énergétique]}}
+\newcommand{\skills}{\ph{la simulation (Python, MATLAB), l'optimisation et la modélisation de systèmes énergétiques}}
+\newcommand{\team}{\ph{votre équipe}}
+\newcommand{\techclause}{\ph{quelle que soit la technologie au cœur du projet}}
+
+% --- Paragraphe 4 : conclusion sincere ---
+\newcommand{\joinaction}{\ph{rejoindre [Organisation] pour ce stage}}
+\newcommand{\domain}{\ph{ces systèmes}}
+
+%% =====================================================================
+%%  LETTRE (pas besoin de modifier ci-dessous)
+%% =====================================================================
+\begin{document}
+
+% ---------- En-tete ----------
+\noindent
+\begin{minipage}[t]{0.55\textwidth}
+  \myname\\
+  \myaddress\\
+  \myphone\\
+  \href{mailto:\myemail}{\myemail}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.4\textwidth}
+  \raggedleft
+  \companylogo
+\end{minipage}
+
+\vspace{1.2em}
+
+% ---------- Destinataire ----------
+\noindent\recipientblock
+
+\ifx\letterdate\empty\else\letterdate\par\fi
+
+\vspace{0.4em}
+
+% ---------- Objet ----------
+\noindent Objet : Candidature au poste de \position{} chez \org{}
+
+\vspace{0.2em}
+
+\noindent\salutation
+
+% ---------- 1. Accroche + pourquoi cette offre ----------
+\hook{} C'est cette question qui motive ma candidature auprès de \org{} pour le poste de \position{} : \whyorg{}.
+
+% ---------- 2. Preuves ----------
+Je suis en dernière année d'ingénierie énergétique à \enim{}, et je poursuis en parallèle un Master de recherche en Gestion des Systèmes Énergétiques. J'ai déjà eu l'occasion de mettre la main à la pâte : \experiences{}, et surtout la conception de mes propres prototypes et outils, \prototypes{}, en tant que responsable du comité Projets du club d'énergie de mon école. Ce ne sont pas des projets de grande envergure, mais ce sont les miens, du premier calcul au dernier boulon.
+
+% ---------- 3. Ce que je cherche + ce que j'apporte ----------
+À travers ce \opportunity{}, je recherche \goal{}. Je suis convaincu que mon expérience en \skills{} me permettrait de contribuer rapidement à \team{}, \techclause{}.
+
+% ---------- 4. Conclusion sincere ----------
+Je serais honoré de \joinaction{}. Je ne prétends pas tout savoir sur \domain{}, mais j'ai la volonté d'apprendre vite et de m'engager pleinement.
+
+\vspace{0.8em}
+
+\noindent Veuillez agréer, Madame, Monsieur, l'expression de mes salutations distinguées.
+
+\vspace{0.4em}
+
+\noindent\myname
+
+\end{document}

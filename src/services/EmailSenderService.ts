@@ -10,7 +10,10 @@ export interface SendApplicationOptions {
   to: string;
   subject: string;
   bodyText: string;
-  cvFileName: string;
+  cvFileName?: string;
+  sourceCvPath?: string;
+  coverLetterPath?: string;
+  coverLetterName?: string;
   replyTo?: string;
 }
 
@@ -18,6 +21,7 @@ export interface SendApplicationResult {
   success: boolean;
   messageId?: string;
   error?: string;
+  attachmentsSent?: string[];
 }
 
 export class EmailSenderService {
@@ -42,12 +46,22 @@ export class EmailSenderService {
   /**
    * Resolve absolute path to the requested CV file
    */
-  resolveCvPath(cvFileName: string): string {
+  resolveCvPath(cvFileName?: string, sourceCvPath?: string): string {
+    if (sourceCvPath && fs.existsSync(sourceCvPath)) {
+      return sourceCvPath;
+    }
+
     const candidatePaths = [
-      path.join(process.cwd(), 'data', 'resumes', cvFileName),
-      path.join(process.cwd(), 'data', cvFileName),
-      path.join(process.cwd(), 'data', 'resumes', 'CV_Seif_Energies_Renouvelables.pdf'),
+      path.join(process.cwd(), 'data', 'resumes', 'SeifEddine_Nefzi_Resume_FR.pdf'),
+      path.join(process.cwd(), 'data', 'resumes', 'SeifEddine_Nefzi_Resume_EN.pdf'),
+      path.join(process.cwd(), 'SeifEddine_Nefzi_Resume_FR.pdf'),
+      path.join(process.cwd(), 'SeifEddine_Nefzi_Resume_EN.pdf'),
     ];
+
+    if (cvFileName) {
+      candidatePaths.unshift(path.join(process.cwd(), 'data', 'resumes', cvFileName));
+      candidatePaths.unshift(path.join(process.cwd(), 'data', cvFileName));
+    }
 
     for (const p of candidatePaths) {
       if (fs.existsSync(p)) {
@@ -59,10 +73,10 @@ export class EmailSenderService {
   }
 
   /**
-   * Send application email with attached CV
+   * Send application email with attached CV and tailored cover letter
    */
   async sendApplicationEmail(options: SendApplicationOptions): Promise<SendApplicationResult> {
-    const { applicationId, to, subject, bodyText, cvFileName, replyTo } = options;
+    const { applicationId, to, subject, bodyText, cvFileName, sourceCvPath, coverLetterPath, coverLetterName, replyTo } = options;
 
     if (!to || !to.includes('@')) {
       const errMsg = `Invalid recipient email address: "${to}"`;
@@ -70,16 +84,29 @@ export class EmailSenderService {
       return { success: false, error: errMsg };
     }
 
-    const cvPath = this.resolveCvPath(cvFileName);
+    const resolvedCvPath = this.resolveCvPath(cvFileName, sourceCvPath);
     const attachments: Array<{ filename: string; path?: string; content?: Buffer }> = [];
+    const attachmentsSent: string[] = [];
 
-    if (fs.existsSync(cvPath)) {
+    // 1. Attach CV — strictly named cv_Seif_Eddine_Nefzi.pdf
+    if (fs.existsSync(resolvedCvPath)) {
       attachments.push({
-        filename: path.basename(cvPath),
-        path: cvPath,
+        filename: 'cv_Seif_Eddine_Nefzi.pdf',
+        path: resolvedCvPath,
       });
+      attachmentsSent.push('cv_Seif_Eddine_Nefzi.pdf');
     } else {
-      logger.warn(`CV attachment file not found at ${cvPath}. Sending email without attachment.`);
+      logger.warn(`CV attachment file not found at ${resolvedCvPath}.`);
+    }
+
+    // 2. Attach tailored LaTeX Cover Letter PDF
+    if (coverLetterPath && fs.existsSync(coverLetterPath)) {
+      const letterFileName = coverLetterName || path.basename(coverLetterPath);
+      attachments.push({
+        filename: letterFileName,
+        path: coverLetterPath,
+      });
+      attachmentsSent.push(letterFileName);
     }
 
     const htmlBody = `
@@ -91,8 +118,9 @@ export class EmailSenderService {
   <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 25px 0 15px 0;" />
   <div style="font-size: 13px; color: #4a5568;">
     <strong>Seif Eddine Nefzi</strong><br />
-    Élève-Ingénieur en Génie Énergétique (ENIM) & Master de Recherche en Énergétique<br />
-    Tél : (+216) 20 016 808 | Email : ${env.SMTP_USER}
+    Élève-Ingénieur en Génie Énergétique (ENIM) & Master de Recherche en Systèmes Énergétiques<br />
+    Tél : (+216) 20 016 808 | Email : ${env.SMTP_USER}<br />
+    LinkedIn : <a href="https://linkedin.com/in/nefzi-seifeddine">linkedin.com/in/nefzi-seifeddine</a>
   </div>
 </div>
 `.trim();
@@ -104,13 +132,14 @@ export class EmailSenderService {
       env.NODE_ENV === 'test' ||
       env.SMTP_USER === 'mock-user@gmail.com'
     ) {
-      logger.info(`[Mock EmailSenderService] Dispatched application to ${to} with attachment ${cvFileName}`);
+      logger.info(`[Mock EmailSenderService] Dispatched application to ${to} with attachments: ${attachmentsSent.join(', ')}`);
       if (applicationId) {
         await applicationTrackingRepo.updateStatus(applicationId, 'APPLIED');
       }
       return {
         success: true,
         messageId: `mock-msg-${Date.now()}`,
+        attachmentsSent,
       };
     }
 
@@ -130,7 +159,7 @@ export class EmailSenderService {
       logger.info(`✅ Successfully dispatched application email to ${to}`, {
         messageId: info.messageId,
         subject,
-        cv: cvFileName,
+        attachments: attachmentsSent,
       });
 
       if (applicationId) {
@@ -140,6 +169,7 @@ export class EmailSenderService {
       return {
         success: true,
         messageId: info.messageId,
+        attachmentsSent,
       };
     } catch (err) {
       const errorStr = String(err);

@@ -1,0 +1,149 @@
+=====================================================================
+ MODÈLE D'EMAIL DE CANDIDATURE (FR) - Seif Eddine Nefzi
+ Usage : candidature à une offre PUBLIÉE (site d'emploi, site de
+         l'entreprise, annonce d'une université ou d'un laboratoire,
+         publication LinkedIn, forum)
+ Pas pour une candidature spontanée (voir Email_Template_FR.txt).
+=====================================================================
+ LÉGENDE
+   [CROCHETS]  = à remplacer par un contenu propre à cette offre
+   Tout le reste = texte fixe (à garder tel quel)
+ Longueur visée du corps de l'email : 100 à 150 mots (puces incluses).
+ Méthode complète et prompt IA : Application_Email_Instructions.txt
+
+ D'ABORD : si l'offre impose un objet, une adresse email, un portail
+ de candidature ou une liste de documents, SUIVEZ-LA À LA LETTRE. Ce
+ modèle est le message d'accompagnement de votre CV et de votre lettre
+ de motivation.
+=====================================================================
+
+
+---------------------------------------------------------------------
+ 1) OBJET (en choisir un, puis remplir les crochets)
+---------------------------------------------------------------------
+ A. Candidature - [intitulé exact de l'offre] - [référence, le cas échéant] - Seif Eddine Nefzi
+ B. Candidature : stage de fin d'études ([date de début]) - [intitulé exact de l'offre] - Seif Eddine Nefzi
+ C. [Format d'objet exigé par l'offre, copié à l'identique]
+
+
+---------------------------------------------------------------------
+ 2) CORPS DE L'EMAIL (copier-coller, puis remplir les crochets)
+---------------------------------------------------------------------
+Madame, Monsieur,
+
+Je vous adresse ma candidature pour l'offre « [intitulé exact de l'offre] » ([référence, le cas échéant]), [SOURCE : choisir une ligne dans la section 3]. Je suis en dernière année du cycle ingénieur en Génie Énergétique, spécialité Énergies Renouvelables, à l'ENIM (École Nationale d'Ingénieurs de Monastir), en parallèle d'un Master de recherche en Gestion des Systèmes Énergétiques, et je suis disponible pour [4 à 6] mois à partir de [mois année].
+
+Votre offre correspond à mon parcours sur les points essentiels :
+- [Exigence 1 de l'offre] : [ma preuve correspondante, section 4]
+- [Exigence 2 de l'offre] : [ma preuve correspondante, section 4]
+- [Exigence 3 de l'offre, facultative] : [ma preuve correspondante, section 4]
+
+[PHRASE FACULTATIVE « POURQUOI EUX » : choisir une variante dans la section 5, ou supprimer ce paragraphe]
+
+Vous trouverez ci-joint mon CV et ma lettre de motivation [, ainsi que les autres documents demandés]. Je serais ravi de vous présenter ma candidature lors d'un entretien, à la date qui vous conviendrait.
+
+Je vous remercie de l'attention portée à ma candidature.
+
+Bien cordialement,
+Seif Eddine Nefzi
+ENIM (École Nationale d'Ingénieurs de Monastir) - Génie Énergétique
+(+216) 20 016 808
+seifeddinenefzi000@gmail.com
+linkedin.com/in/nefzi-seifeddine
+
+(Si le nom du destinataire est connu : remplacer « Madame, Monsieur, »
+ par « Bonjour Madame [Nom], » ou « Bonjour Monsieur [Nom], ».)
+
+
+---------------------------------------------------------------------
+ 3) LIGNE SOURCE (comment vous avez trouvé l'offre, en choisir UNE)
+---------------------------------------------------------------------
+ A. Site d'emploi ou site de l'entreprise
+ publiée sur [plateforme / site de l'entreprise] le [date]
+
+ B. Annonce d'une université ou d'un laboratoire
+ publiée par [université / laboratoire]
+
+ C. Publication sur un réseau social
+ que j'ai vue sur [LinkedIn] dans une publication de [nom]
+
+ D. Recommandation (uniquement si c'est vrai, et avec l'accord de la personne)
+ qui m'a été recommandée par [nom, fonction]
+
+ E. Événement
+ présentée lors de [événement, p. ex. forum de recrutement] le [date]
+
+
+---------------------------------------------------------------------
+ 4) MENU DE PREUVES (associer chaque exigence de l'offre à UNE ligne)
+---------------------------------------------------------------------
+ Règle : choisissez les 2 ou 3 exigences de l'offre que vous pouvez
+ réellement appuyer. Reprenez les mots de l'offre pour l'exigence, puis
+ la ligne ci-dessous pour la preuve. Ne revendiquez jamais une exigence
+ que vous ne pouvez pas justifier.
+
+ Optimisation, gestion d'énergie, microgrids
+ -> développement d'un système de gestion d'énergie pour un microgrid hybride sous Python, avec un backend FastAPI, comparant quatre méthodes d'optimisation (programmation dynamique, algorithme génétique, optimisation par essaim de particules et programmation linéaire)
+
+ Python, MATLAB, simulation, modélisation
+ -> simulation sous Python et MATLAB dans mes projets, dont la simulation de la performance annuelle d'un suiveur solaire pour Zarzis, Tunisie (résultats de simulation)
+
+ Conception et dimensionnement photovoltaïque
+ -> dimensionnement d'installations photovoltaïques et réalisation d'études techniques lors de mon stage chez Zenith Solar Engineering (juin 2026)
+
+ Efficacité énergétique, industrie, procédés
+ -> analyse de la consommation énergétique d'un procédé de régénération d'huiles usagées et étude de la récupération de chaleur fatale lors de mon stage chez SOTULUB (Société Tunisienne des Lubrifiants, août 2025)
+
+ Analyse de données, production
+ -> analyse de rapports de production quotidiens (février à juin 2026) et élaboration de synthèses mensuelles et de graphiques lors de mon stage chez CTKCP (Compagnie Tuniso-Koweito-Chinoise de Pétrole), champ pétrolier de Sidi El Kilani
+
+ Bâtiments, simulation énergétique
+ -> simulation énergétique et dimensionnement de bâtiments lors de mon stage chez EcoBuilding Consulting (juin 2025)
+
+ Stockage par batteries, services réseau
+ -> formation en systèmes de stockage d'énergie par batteries pour les services système du réseau chez RENAC (Renewables Academy), score 96,67 %
+
+ Intelligence artificielle appliquée à l'énergie
+ -> formation en intelligence artificielle pour les énergies renouvelables et le couplage sectoriel chez RENAC (Renewables Academy), score 100 %
+
+ Matériel, prototypage, Arduino
+ -> conception et réalisation de SunBox Track, un suiveur solaire bi-axial piloté par Arduino et ESP32, et pilotage du prototypage d'une mini-éolienne et d'un mini-barrage hydroélectrique
+
+ Autonomie, recherche, conception
+ -> conception et simulation d'un suiveur solaire à actionneur unique, soumission individuelle à l'IEEE (Institute of Electrical and Electronics Engineers) Zucker Undergraduate Design Contest 2026
+
+ Travail d'équipe, leadership
+ -> responsable du comité Projets du club d'énergie de mon école depuis 2024, pilotage de projets de prototypage
+
+ Langues
+ -> arabe (langue maternelle), français et anglais (courants, anglais technique)
+
+ Outils de conception
+ -> SolidWorks, AutoCAD (notions), DIALux et Excel
+
+ SI UNE EXIGENCE MANQUE À VOTRE PROFIL (option honnête, à utiliser au
+ plus une fois) :
+ -> Je n'ai pas encore travaillé avec [outil / exigence], et je suis prêt à l'apprendre rapidement.
+
+
+---------------------------------------------------------------------
+ 5) PHRASE FACULTATIVE « POURQUOI EUX » (en choisir UNE ou supprimer le paragraphe)
+---------------------------------------------------------------------
+ A. Projet
+ Les travaux de [organisation] sur [projet ou technologie précis] correspondent au type d'ingénierie énergétique concrète auquel je souhaite contribuer.
+
+ B. Mission
+ La mission de [organisation] de [mission précise] rejoint ce qui me motive : rendre les systèmes énergétiques plus efficaces en pratique, et pas seulement sur le papier.
+
+ C. Contenu de l'offre
+ Ce qui m'attire dans cette offre, c'est [un élément concret de l'offre, p. ex. le travail sur les systèmes énergétiques hybrides], proche de ce que j'ai réalisé dans mes projets.
+
+ Si vous ne trouvez rien de précis et de vrai, supprimez ce paragraphe.
+
+
+---------------------------------------------------------------------
+ 6) LIGNE LOCALISATION FACULTATIVE (uniquement si c'est vrai)
+---------------------------------------------------------------------
+ À ajouter après la phrase de disponibilité si l'offre est hors de
+ Tunisie ou à distance :
+ Je suis basé en Tunisie et [disponible pour m'installer à [ville] / en mesure de travailler à distance / disponible pour un stage avec accompagnement pour le visa].

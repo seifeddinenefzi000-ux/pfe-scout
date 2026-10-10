@@ -17,6 +17,7 @@
     "resume:test": "tsx src/scripts/testResume.ts",
     "email:test": "tsx src/scripts/testEmailDispatch.ts",
     "pipeline:run": "tsx src/scripts/runPipeline.ts",
+    "bot:listen": "tsx src/scripts/runApprovalDaemon.ts",
     "scout": "tsx src/scripts/runScoutJob.ts",
     "lint": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\""

@@ -9,3 +9,6 @@ coverage/
 .trigger/
 *.pdf
 resume.pdf
+data/generated_letters/
+data/drafts/
+

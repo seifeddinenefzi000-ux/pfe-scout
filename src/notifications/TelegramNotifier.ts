@@ -76,6 +76,7 @@ Consultez les fiches détaillées ci-dessous et cliquez sur <b>Approuver</b> pou
       ? '📬 <b>CANDIDATURE SPONTANÉE CHERCHEUR (COLD OUTREACH)</b>'
       : '📋 <b>OFFRE DE STAGE PFE PUBLIÉE</b>';
 
+    const letterName = draft.coverLetterPdfName || (draft.language === 'FR' ? 'Lettre_Motivation_Seif_Eddine_Nefzi.pdf' : 'Cover_Letter_Seif_Eddine_Nefzi.pdf');
     const message = `
 ${header}
 
@@ -84,7 +85,10 @@ ${header}
 📍 <b>Pays :</b> ${this.escapeHtml(draft.targetCountry)}
 👤 <b>Contact :</b> ${this.escapeHtml(draft.targetContact)}
 
-📄 <b>CV Sélectionné :</b> <code>${this.escapeHtml(draft.cvFileName)}</code>
+📎 <b>Documents joints :</b>
+• <code>${this.escapeHtml(draft.cvAttachmentName || 'cv_Seif_Eddine_Nefzi.pdf')}</code>
+• <code>${this.escapeHtml(letterName)}</code>
+
 ✉️ <b>Objet Email :</b> <code>${this.escapeHtml(draft.emailSubject)}</code>
 
 📝 <b>Aperçu du message :</b>

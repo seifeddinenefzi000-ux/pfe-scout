@@ -90,11 +90,28 @@ export class ArchiveService {
       const aUrl = (a.url || '').toLowerCase().trim();
       const aHash = a.contentHash;
       const aNorm = `${a.title} ${a.company}`.toLowerCase().replace(/[^a-z0-9]/g, '');
-      return (
-        (itemUrl && aUrl && itemUrl === aUrl) ||
-        (itemHash && aHash && itemHash === aHash) ||
-        (normTitleCompany && aNorm && normTitleCompany === aNorm)
+
+      // Exact match
+      if ((itemUrl && aUrl && itemUrl === aUrl) || (itemHash && aHash && itemHash === aHash) || (normTitleCompany && aNorm && normTitleCompany === aNorm)) {
+        return true;
+      }
+
+      // Fuzzy check: same company + significant keyword overlap
+      const sameCompany = a.company && item.companyName && (
+        a.company.toLowerCase().includes(item.companyName.toLowerCase()) ||
+        item.companyName.toLowerCase().includes(a.company.toLowerCase())
       );
+
+      if (sameCompany) {
+        const itemWords = new Set(item.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3));
+        const aWords = a.title.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+        const overlap = aWords.filter((w) => itemWords.has(w)).length;
+        if (overlap >= 2 || (aWords.length > 0 && overlap / aWords.length >= 0.6)) {
+          return true;
+        }
+      }
+
+      return false;
     });
 
     if (isLocal) return true;

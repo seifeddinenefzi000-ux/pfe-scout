@@ -1,0 +1,183 @@
+%% =====================================================================
+%%  COVER LETTER TEMPLATE (EN) - Seif Eddine Nefzi
+%%  Structure: 1) Hook + why this offer  2) Proof ("hands dirty")
+%%             3) What I seek + what I bring  4) Honest close
+%%
+%%  HOW TO USE FOR EACH OFFER
+%%   1. Edit ONLY the "CUSTOMIZE HERE" block below.
+%%   2. Blue text = what you should review or replace for this offer.
+%%      Text in [brackets] = must be replaced.
+%%   3. When finished, set \highlightfalse (a few lines below) so
+%%      everything prints in black, then recompile.
+%%
+%%  TIPS
+%%   - OPENING HOOK: choose the story that matches the offer by editing
+%%     the line  \newcommand{\hook}{...}  (options: \hookENIM, \hookEMS,
+%%     \hookActuator, \hookTracker, \hookIndustry) or write your own.
+%%   - Keep ONE sentence in paragraph 1 that is truly specific to the
+%%     organisation (a project, a mission, a result).
+%%   - Pick the 2-3 experiences most relevant to THIS offer (menu below).
+%%   - ACRONYMS: always give the full name at first use. For ENIM, EMS,
+%%     CTKCP and SOTULUB use \enim{}, \ems{}, \ctkcp{}, \sotulub{}: the
+%%     full name appears automatically the first time only. For any other
+%%     acronym, use \acro{key}{ACRONYM}{Full name}.
+%%   - Keep the letter on one page.
+%%
+%%  EXPERIENCE MENU (copy the ones that fit the offer)
+%%   - photovoltaic system sizing and technical studies at Zenith Solar Engineering
+%%   - production analysis on an oil field at \ctkcp{}
+%%   - energy efficiency and waste heat recovery studies at \sotulub{}
+%%   - building energy simulation and sizing at EcoBuilding Consulting
+%%   - a microgrid energy management system comparing four optimization
+%%     methods (dynamic programming, genetic algorithm, particle swarm
+%%     optimization, linear programming)
+%%   - a single-actuator solar tracker designed for the IEEE (Institute of
+%%     Electrical and Electronics Engineers) Zucker Undergraduate Design Contest
+%%   - training in battery storage and in AI for renewable energy at
+%%     RENAC (Renewables Academy)
+%% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[a4paper,left=1in,right=1in,top=0.9in,bottom=0.9in]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{parskip}
+\usepackage[hidelinks]{hyperref}
+
+\pagestyle{empty}
+
+%% ---------------------------------------------------------------------
+%%  SWITCH: \highlighttrue = blue placeholders (template/draft mode)
+%%          \highlightfalse = everything black (final version)
+%% ---------------------------------------------------------------------
+\newif\ifhighlight
+\highlighttrue
+\newcommand{\ph}[1]{\ifhighlight\textcolor{blue}{#1}\else #1\fi}
+
+%% ---------------------------------------------------------------------
+%%  ACRONYM HELPER: full name appears the first time only
+%%  \acro{key}{ACRONYM}{Full name}
+%% ---------------------------------------------------------------------
+\newcommand{\acro}[3]{%
+  \ifcsname acrodone@#1\endcsname
+    #2%
+  \else
+    #2 (#3)%
+    \expandafter\gdef\csname acrodone@#1\endcsname{}%
+  \fi}
+\newcommand{\enim}{\acro{enim}{ENIM}{National Engineering School of Monastir}}
+\newcommand{\ems}{\acro{ems}{EMS}{Energy Management System}}
+\newcommand{\ctkcp}{\acro{ctkcp}{CTKCP}{Tunisian-Kuwaiti-Chinese Petroleum Company}}
+\newcommand{\sotulub}{\acro{sotulub}{SOTULUB}{Tunisian Lubricants Company}}
+
+%% =====================================================================
+%%  CUSTOMIZE HERE
+%% =====================================================================
+
+% --- Your details (change only if needed) ---
+\newcommand{\myname}{Seif Eddine Nefzi}
+\newcommand{\myaddress}{Menzel Bourguiba, Tunisia}
+\newcommand{\myphone}{(+216) 20 016 808}
+\newcommand{\myemail}{nefzi.seifeddine@enim.u-monastir.tn}
+
+% --- Optional: company logo on the top right, e.g.
+%     \newcommand{\companylogo}{\includegraphics[width=4.5cm]{logo.png}}
+\newcommand{\companylogo}{}
+
+% --- Optional date (leave empty to omit), e.g. {October 2026}
+\newcommand{\letterdate}{}
+
+% --- Recipient (use \\ between lines) ---
+\newcommand{\recipientblock}{%
+  \ph{[Hiring Manager / Recruitment Team]}\\
+  \ph{[Organisation]}\\
+  \ph{[City, Country]}}
+
+% --- The offer ---
+\newcommand{\org}{\ph{[Organisation]}}
+\newcommand{\position}{\ph{[position title]}}
+\newcommand{\opportunity}{\ph{graduation internship (4 to 6 months)}}
+\newcommand{\salutation}{\ph{Dear Sir or Madam,}}   % or: Dear Ms/Mr [Name],
+
+% --- Paragraph 1: OPENING HOOK (pick the story that fits the offer) ---
+\newcommand{\hookENIM}{\ph{Ever since I joined \enim{}, one question has never left me: how to make our energy systems genuinely more efficient, not just on paper.}}
+\newcommand{\hookEMS}{\ph{Ever since I started building an \ems{} for a hybrid microgrid, one question has never left me: how to make the energy we produce, store and consume work together more intelligently, not just on paper.}}
+\newcommand{\hookActuator}{\ph{Ever since I designed a single-actuator solar tracker, which follows the sun with one motor instead of two, one question has never left me: how to get more energy from simpler hardware, not just on paper.}}
+\newcommand{\hookTracker}{\ph{Ever since I designed my first solar tracker at \enim{}, one question has never left me: how to make our energy systems genuinely more efficient, not just on paper.}}
+\newcommand{\hookIndustry}{\ph{Ever since I studied waste heat recovery at \sotulub{}, one question has never left me: how much energy do we still waste in industry, and how can we recover it?}}
+
+\newcommand{\hook}{\hookENIM}   % <-- CHOOSE: \hookENIM, \hookEMS, \hookActuator, \hookTracker, \hookIndustry
+
+% --- Paragraph 1: why THIS organisation (one concrete sentence) ---
+\newcommand{\whyorg}{\ph{[one concrete sentence on what attracts you to this organisation, project or mission, linked to your background]}}
+
+% --- Paragraph 2: proof (pick 2-3 from the experience menu above) ---
+\newcommand{\experiences}{\ph{photovoltaic system sizing at Zenith Solar Engineering, production analysis on an oil field at \ctkcp{}, and energy efficiency and waste heat recovery studies at \sotulub{}}}
+\newcommand{\prototypes}{\ph{from a dual-axis solar tracker to a microgrid energy management system comparing four optimization methods}}
+
+% --- Paragraph 3: what you seek and what you bring ---
+\newcommand{\goal}{\ph{an immersion in [type of work, e.g. applied research, field engineering, energy management] where I could put my energy-engineering profile to work on [type of projects, e.g. concrete energy-transition projects]}}
+\newcommand{\skills}{\ph{simulation (Python, MATLAB), optimization and energy systems modelling}}
+\newcommand{\team}{\ph{your team}}
+\newcommand{\techclause}{\ph{whatever the specific technology at the core of the project}}
+
+% --- Paragraph 4: honest close ---
+\newcommand{\joinaction}{\ph{join [Organisation] for this internship}}
+\newcommand{\domain}{\ph{these systems}}
+
+%% =====================================================================
+%%  LETTER (no need to edit below)
+%% =====================================================================
+\begin{document}
+
+% ---------- Header ----------
+\noindent
+\begin{minipage}[t]{0.55\textwidth}
+  \myname\\
+  \myaddress\\
+  \myphone\\
+  \href{mailto:\myemail}{\myemail}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.4\textwidth}
+  \raggedleft
+  \companylogo
+\end{minipage}
+
+\vspace{1.2em}
+
+% ---------- Recipient ----------
+\noindent\recipientblock
+
+\ifx\letterdate\empty\else\letterdate\par\fi
+
+\vspace{0.4em}
+
+% ---------- Subject ----------
+\noindent Subject: Application for the \position{} at \org{}
+
+\vspace{0.2em}
+
+\noindent\salutation
+
+% ---------- 1. Hook + why this offer ----------
+\hook{} This is the question driving my application to \org{} for the \position{}: \whyorg{}.
+
+% ---------- 2. Proof ----------
+I am in my final year of Energy Engineering at \enim{}, pursuing in parallel a Research Master's in Energy Systems Management. I have already had the chance to get my hands dirty: \experiences{}, and most notably the design of my own prototypes and tools, \prototypes{}, as Head of the Projects Committee of my school's energy club. These are not large-scale projects, but they are mine, from the first calculation to the last bolt.
+
+% ---------- 3. What I seek + what I bring ----------
+Through this \opportunity{}, I am seeking \goal{}. I am confident that my experience in \skills{} would allow me to contribute quickly to \team{}, \techclause{}.
+
+% ---------- 4. Honest close ----------
+I would be honored to \joinaction{}. I do not claim to know everything about \domain{}, but I have the drive to learn fast and to fully commit.
+
+\vspace{0.8em}
+
+\noindent Sincerely,\\
+\myname
+
+\end{document}

@@ -1,0 +1,95 @@
+=====================================================================
+ INTERNSHIP EMAIL TEMPLATE (EN) - Seif Eddine Nefzi
+ Use: graduation internship request to a professor, researcher or
+      company contact (cold email or reply to a published offer)
+=====================================================================
+ LEGEND
+   [BRACKETS]  = replace with content specific to this offer
+   Everything else = fixed text (true and tested, keep as is)
+ Target length of the final email body: 130 to 170 words.
+ Full method and AI prompt: Email_Customization_Instructions.txt
+=====================================================================
+
+
+---------------------------------------------------------------------
+ 1) SUBJECT LINE (pick one, then fill the brackets)
+---------------------------------------------------------------------
+ A. Graduation internship request ([start date]) - [topic of their work] - Seif Eddine Nefzi
+ B. Inquiry about a [4 to 6]-month graduation internship - [team or lab name]
+ C. Application: [exact title of the offer] - Seif Eddine Nefzi
+    (use C only when answering a published offer)
+
+
+---------------------------------------------------------------------
+ 2) EMAIL BODY (copy and paste, then fill the brackets)
+---------------------------------------------------------------------
+Dear [Professor / Dr / Mr / Ms] [Last name],
+
+I am writing because I am looking for a graduation internship of [4 to 6] months, starting in [month year]. I am in my final year of the Engineering Degree in Energy Engineering (Renewable Energies track) at ENIM (National Engineering School of Monastir), alongside a Research Master's in Energy Systems Management.
+
+[PARAGRAPH 2: choose one variant from section 3]
+
+I would be glad to contribute to [your work / your team / your projects] during this internship, bringing my experience in [PARAGRAPH 3: choose one line from section 4]. Please find attached my CV and a cover letter detailing my background.
+
+If an opportunity exists within [your team / your company], or if you know someone I should contact, I would be very grateful.
+
+Thank you very much for your time.
+
+Kind regards,
+Seif Eddine Nefzi
+ENIM (National Engineering School of Monastir) - Energy Engineering
+(+216) 20 016 808
+seifeddinenefzi000@gmail.com
+linkedin.com/in/nefzi-seifeddine
+
+(If you do not attach a cover letter, delete the last sentence of
+ paragraph 3 and mention only the CV.)
+
+
+---------------------------------------------------------------------
+ 3) PARAGRAPH 2 - WHY THEM (choose ONE, always add ONE concrete detail)
+---------------------------------------------------------------------
+ The detail must be real and specific: a paper, a project, a product,
+ a sentence of the offer. Spend 5 minutes on their page first. If you
+ find nothing specific, use variant D rather than inventing flattery.
+
+ A. New approach (honest curiosity)
+ Your work on [specific topic] at [university / laboratory] opens an approach I have not yet explored in my own projects, but one that interests me greatly for [application, e.g. microgrid optimization].
+
+ B. Direct overlap with my work
+ Your work on [specific topic] at [university / laboratory] connects directly to my own project, [my project, e.g. an Energy Management System (EMS) for a hybrid microgrid comparing four optimization methods], which I would like to take further in a research setting.
+
+ C. Company or project
+ [Company]'s [project / product / mission] resonates with my background in [domain], in particular [my relevant experience, e.g. my internship on waste heat recovery].
+
+ D. Published offer
+ Your offer "[exact title]" caught my attention because [one concrete reason linked to the offer, e.g. it involves hybrid energy systems, which I have worked on during my projects].
+
+
+---------------------------------------------------------------------
+ 4) PARAGRAPH 3 - WHAT I BRING (choose ONE line, keep 2 to 3 items max)
+---------------------------------------------------------------------
+ Microgrids, energy management, optimization
+ -> optimization of hybrid microgrids (comparison of four methods: dynamic programming, genetic algorithm, particle swarm optimization and linear programming) and simulation in Python and MATLAB
+
+ Solar and photovoltaic
+ -> photovoltaic system sizing (internship at Zenith Solar Engineering), annual performance simulation of a solar tracker in Python, and prototyping of solar trackers
+
+ Industrial energy efficiency, process
+ -> industrial energy efficiency and waste heat recovery (internship at SOTULUB, Tunisian Lubricants Company) and production data analysis (internship at CTKCP, Tunisian-Kuwaiti-Chinese Petroleum Company)
+
+ Battery storage, grid services
+ -> battery energy storage systems for grid ancillary services (training at RENAC, Renewables Academy, score 96.67%) and optimization of hybrid microgrids
+
+ Artificial intelligence, data
+ -> modelling and optimization in Python and MATLAB, and training in artificial intelligence for renewable energy (RENAC, Renewables Academy, score 100%)
+
+ Buildings, lighting
+ -> building energy simulation and sizing (internship at EcoBuilding Consulting) and training in lighting design with DIALux
+
+ Hardware, prototyping
+ -> prototype design and construction (dual-axis solar tracker controlled by Arduino and ESP32, mini wind turbine, mini hydroelectric dam) within my school's energy club
+
+ Tip: for a long line, remove the content of the parentheses to shorten it.
+ Do not add skills that are not in these lines unless they are true and
+ on your CV.

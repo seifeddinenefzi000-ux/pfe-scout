@@ -1,0 +1,97 @@
+=====================================================================
+ MODÈLE D'EMAIL DE STAGE (FR) - Seif Eddine Nefzi
+ Usage : demande de stage de fin d'études à un professeur, un
+         chercheur ou un contact en entreprise (email spontané ou
+         réponse à une offre publiée)
+=====================================================================
+ LÉGENDE
+   [CROCHETS]  = à remplacer par un contenu propre à cette offre
+   Tout le reste = texte fixe (vrai et déjà testé, à garder tel quel)
+ Longueur visée du corps de l'email : 130 à 170 mots.
+ Méthode complète et prompt IA : Email_Customization_Instructions.txt
+=====================================================================
+
+
+---------------------------------------------------------------------
+ 1) OBJET (en choisir un, puis remplir les crochets)
+---------------------------------------------------------------------
+ A. Demande de stage de fin d'études ([date de début]) - [sujet de leurs travaux] - Seif Eddine Nefzi
+ B. Demande d'information : stage de fin d'études de [4 à 6] mois - [équipe ou laboratoire]
+ C. Candidature : [intitulé exact de l'offre] - Seif Eddine Nefzi
+    (utiliser C uniquement pour répondre à une offre publiée)
+
+
+---------------------------------------------------------------------
+ 2) CORPS DE L'EMAIL (copier-coller, puis remplir les crochets)
+---------------------------------------------------------------------
+Bonjour [Professeur / Docteur / Madame / Monsieur] [Nom],
+
+Je me permets de vous contacter car je suis à la recherche d'un stage de fin d'études (PFE, projet de fin d'études) de [4 à 6] mois, avec un départ prévu en [mois année]. Je suis en dernière année du cycle ingénieur en Génie Énergétique, spécialité Énergies Renouvelables, à l'ENIM (École Nationale d'Ingénieurs de Monastir), en parallèle d'un Master de recherche en Gestion des Systèmes Énergétiques.
+
+[PARAGRAPHE 2 : choisir une variante dans la section 3]
+
+Je serais très heureux de contribuer à [vos travaux / votre équipe / vos projets] le temps de ce stage, en apportant mon expérience en [PARAGRAPHE 3 : choisir une ligne dans la section 4]. Vous trouverez ci-joint mon CV ainsi qu'une lettre de motivation détaillant mon parcours.
+
+Si une opportunité existait au sein de [votre équipe / votre entreprise], ou si vous connaissiez quelqu'un à contacter, je vous en serais vraiment reconnaissant.
+
+Merci beaucoup pour votre temps.
+
+Bien cordialement,
+Seif Eddine Nefzi
+ENIM (École Nationale d'Ingénieurs de Monastir) - Génie Énergétique
+(+216) 20 016 808
+seifeddinenefzi000@gmail.com
+linkedin.com/in/nefzi-seifeddine
+
+(Si vous ne joignez pas de lettre de motivation, supprimez la fin de
+ la dernière phrase du paragraphe 3 et mentionnez uniquement le CV.)
+
+
+---------------------------------------------------------------------
+ 3) PARAGRAPHE 2 - POURQUOI EUX (en choisir UNE, toujours ajouter UN détail concret)
+---------------------------------------------------------------------
+ Le détail doit être réel et précis : un article, un projet, un produit,
+ une phrase de l'offre. Consacrez 5 minutes à leur page avant d'écrire.
+ Si vous ne trouvez rien de précis, utilisez la variante D plutôt que
+ d'inventer des compliments.
+
+ A. Approche nouvelle (curiosité sincère)
+ Vos travaux sur [sujet précis] à [université / laboratoire] ouvrent une approche que je n'ai pas encore explorée dans mes propres projets, mais qui m'intéresse énormément pour [application, p. ex. l'optimisation des microgrids].
+
+ B. Recoupement direct avec mon travail
+ Vos travaux sur [sujet précis] à [université / laboratoire] rejoignent directement mon propre projet, [mon projet, p. ex. un système de gestion d'énergie (EMS, Energy Management System) pour microgrid hybride comparant quatre méthodes d'optimisation], que j'aimerais approfondir dans un cadre de recherche.
+
+ C. Entreprise ou projet
+ Le [projet / produit / mission] de [entreprise] rejoint mon parcours en [domaine], notamment [mon expérience pertinente, p. ex. mon stage sur la récupération de chaleur fatale].
+
+ D. Offre publiée
+ Votre offre « [intitulé exact] » a retenu mon attention car [une raison concrète liée à l'offre, p. ex. elle porte sur les systèmes énergétiques hybrides, sur lesquels j'ai travaillé dans mes projets].
+
+
+---------------------------------------------------------------------
+ 4) PARAGRAPHE 3 - CE QUE J'APPORTE (choisir UNE ligne, 2 à 3 éléments max)
+---------------------------------------------------------------------
+ Microgrids, gestion d'énergie, optimisation
+ -> optimisation de microgrids hybrides (comparaison de quatre méthodes : programmation dynamique, algorithme génétique, optimisation par essaim de particules et programmation linéaire) et simulation sous Python et MATLAB
+
+ Solaire et photovoltaïque
+ -> dimensionnement de systèmes photovoltaïques (stage chez Zenith Solar Engineering), simulation de la performance annuelle d'un suiveur solaire sous Python et prototypage de suiveurs solaires
+
+ Efficacité énergétique industrielle, procédés
+ -> efficacité énergétique industrielle et récupération de chaleur fatale (stage chez SOTULUB, Société Tunisienne des Lubrifiants) et analyse de données de production (stage chez CTKCP, Compagnie Tuniso-Koweito-Chinoise de Pétrole)
+
+ Stockage par batteries, services réseau
+ -> systèmes de stockage d'énergie par batteries pour les services système du réseau (formation RENAC, Renewables Academy, score 96,67 %) et optimisation de microgrids hybrides
+
+ Intelligence artificielle, données
+ -> modélisation et optimisation sous Python et MATLAB, et formation en intelligence artificielle pour les énergies renouvelables (RENAC, Renewables Academy, score 100 %)
+
+ Bâtiments, éclairage
+ -> simulation énergétique et dimensionnement de bâtiments (stage chez EcoBuilding Consulting) et formation en conception d'éclairage avec DIALux
+
+ Matériel, prototypage
+ -> conception et réalisation de prototypes (suiveur solaire bi-axial piloté par Arduino et ESP32, mini-éolienne, mini-barrage hydroélectrique) au sein du club d'énergie de mon école
+
+ Astuce : pour raccourcir une ligne, supprimez le contenu des parenthèses.
+ N'ajoutez pas de compétences absentes de ces lignes, sauf si elles sont
+ vraies et figurent sur votre CV.

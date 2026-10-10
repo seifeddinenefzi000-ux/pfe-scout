@@ -1,0 +1,144 @@
+=====================================================================
+ APPLICATION EMAIL TEMPLATE (EN) - Seif Eddine Nefzi
+ Use: applying to a PUBLISHED offer (job board, company website,
+      university or laboratory posting, LinkedIn post, forum)
+ Not for cold outreach (see Email_Template_EN.txt for that).
+=====================================================================
+ LEGEND
+   [BRACKETS]  = replace with content specific to this offer
+   Everything else = fixed text (keep as is)
+ Target length of the email body: 100 to 150 words (bullets included).
+ Full method and AI prompt: Application_Email_Instructions.txt
+
+ FIRST: if the offer gives a required subject line, email address,
+ application portal or list of documents, FOLLOW IT EXACTLY. This
+ template is the covering message that goes with your CV and cover
+ letter.
+=====================================================================
+
+
+---------------------------------------------------------------------
+ 1) SUBJECT LINE (pick one, then fill the brackets)
+---------------------------------------------------------------------
+ A. Application - [exact offer title] - [reference, if any] - Seif Eddine Nefzi
+ B. Application: graduation internship ([start date]) - [exact offer title] - Seif Eddine Nefzi
+ C. [Subject format required by the offer, copied exactly]
+
+
+---------------------------------------------------------------------
+ 2) EMAIL BODY (copy and paste, then fill the brackets)
+---------------------------------------------------------------------
+Dear [Mr / Ms / Hiring Team],
+
+I am applying for the [exact offer title] ([reference, if any]), [SOURCE: choose one line from section 3]. I am in my final year of the Engineering Degree in Energy Engineering (Renewable Energies track) at ENIM (National Engineering School of Monastir), alongside a Research Master's in Energy Systems Management, and I am available for [4 to 6] months from [month year].
+
+Your offer matches my background on the points that matter most:
+- [Requirement 1 from the offer]: [my matching evidence, section 4]
+- [Requirement 2 from the offer]: [my matching evidence, section 4]
+- [Requirement 3 from the offer, optional]: [my matching evidence, section 4]
+
+[OPTIONAL ONE-LINE WHY THEM: choose one from section 5, or delete this paragraph]
+
+Please find attached my CV and my cover letter [, and the other documents requested]. I would be glad to discuss my application in an interview, at a time that suits you.
+
+Thank you for your time and consideration.
+
+Kind regards,
+Seif Eddine Nefzi
+ENIM (National Engineering School of Monastir) - Energy Engineering
+(+216) 20 016 808
+seifeddinenefzi000@gmail.com
+linkedin.com/in/nefzi-seifeddine
+
+
+---------------------------------------------------------------------
+ 3) SOURCE LINE (how you found the offer, choose ONE)
+---------------------------------------------------------------------
+ A. Job board or company website
+ published on [platform / company website] on [date]
+
+ B. University or laboratory posting
+ published by [university / laboratory]
+
+ C. Social media post
+ that I saw on [LinkedIn] in a post by [name]
+
+ D. Referral (only if true, and with the person's agreement)
+ recommended to me by [name, role]
+
+ E. Event
+ presented at [event, e.g. career forum] on [date]
+
+
+---------------------------------------------------------------------
+ 4) EVIDENCE MENU (match each requirement of the offer to ONE line)
+---------------------------------------------------------------------
+ Rule: pick the 2 or 3 requirements of the offer that you can truly
+ support. Use the offer's own words for the requirement, then the line
+ below for the evidence. Never claim a requirement you cannot back up.
+
+ Optimization, energy management, microgrids
+ -> built an energy management system for a hybrid microgrid in Python, with a FastAPI backend, comparing four optimization methods (dynamic programming, genetic algorithm, particle swarm optimization and linear programming)
+
+ Python, MATLAB, simulation, modelling
+ -> Python and MATLAB simulation in my projects, including the annual performance simulation of a solar tracker for Zarzis, Tunisia (simulation results)
+
+ Photovoltaic design and sizing
+ -> sized photovoltaic installations and carried out technical studies during my internship at Zenith Solar Engineering (June 2026)
+
+ Energy efficiency, industry, process
+ -> analysed the energy use of a used-oil regeneration process and studied waste heat recovery during my internship at SOTULUB (Tunisian Lubricants Company, August 2025)
+
+ Data analysis, production
+ -> analysed daily production reports (February to June 2026) and built monthly summaries and charts during my internship at CTKCP (Tunisian-Kuwaiti-Chinese Petroleum Company), Sidi El Kilani oil field
+
+ Buildings, energy simulation
+ -> performed energy simulation and sizing of buildings during my internship at EcoBuilding Consulting (June 2025)
+
+ Battery storage, grid services
+ -> trained in Battery Energy Storage Systems for Grid Ancillary Services at RENAC (Renewables Academy), score 96.67%
+
+ Artificial intelligence applied to energy
+ -> trained in artificial intelligence for renewable energy and sector coupling at RENAC (Renewables Academy), score 100%
+
+ Hardware, prototyping, Arduino
+ -> designed and built SunBox Track, a dual-axis solar tracker controlled by Arduino and ESP32, and lead prototyping of a mini wind turbine and a mini hydroelectric dam
+
+ Autonomy, research, design
+ -> designed and simulated a single-actuator solar tracker as an individual submission to the 2026 IEEE (Institute of Electrical and Electronics Engineers) Zucker Undergraduate Design Contest
+
+ Teamwork, leadership
+ -> Head of the Projects Committee of my school's energy club since 2024, leading prototype projects
+
+ Languages
+ -> native Arabic, fluent French and fluent English (technical)
+
+ Design tools
+ -> SolidWorks, AutoCAD (basic), DIALux and Excel
+
+ IF A REQUIREMENT IS MISSING FROM YOUR PROFILE (honest option, use at
+ most once):
+ -> I have not yet worked with [tool / requirement], and I am ready to learn it quickly.
+
+
+---------------------------------------------------------------------
+ 5) OPTIONAL ONE-LINE "WHY THEM" (choose ONE or delete the paragraph)
+---------------------------------------------------------------------
+ A. Project
+ [Organisation]'s work on [specific project or technology] is the kind of concrete energy engineering I want to contribute to.
+
+ B. Mission
+ [Organisation]'s mission to [specific mission] matches what motivates me: making energy systems more efficient in practice, not just on paper.
+
+ C. Offer content
+ What attracts me in this offer is [one concrete element of the offer, e.g. working on hybrid energy systems], which is close to what I have done in my projects.
+
+ If you cannot find anything specific and true, delete this paragraph.
+
+
+---------------------------------------------------------------------
+ 6) OPTIONAL LOCATION LINE (only if true)
+---------------------------------------------------------------------
+ Add after the availability sentence if the offer is outside Tunisia
+ or remote:
+ I am based in Tunisia and [available to relocate to [city] / able to work remotely / available for a visa-supported internship].

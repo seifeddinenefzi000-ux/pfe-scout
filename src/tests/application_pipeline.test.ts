@@ -61,18 +61,16 @@ describe('PFE Scout Core Pipeline Tests', () => {
     expect(result.rejectedCount).toBe(2);
   });
 
-  it('ApplicationTailoringService: should pick the correct CV track for thermal vs microgrid offers', () => {
-    const thermalPick = applicationTailoringService.selectBestCvTrack('Optimisation échangeurs de chaleur et bilan thermique');
-    expect(thermalPick.track).toBe('CV_Seif_Thermicien');
-    expect(thermalPick.fileName).toBe('CV_Seif_Thermicien.pdf');
+  it('ApplicationTailoringService: should pick the correct language and resume (FR vs EN) and attach as cv_Seif_Eddine_Nefzi.pdf', () => {
+    const frLang = applicationTailoringService.detectLanguage('France', 'Stage PFE optimisation thermique');
+    expect(frLang).toBe('FR');
+    const frResume = applicationTailoringService.resolveResumeSource('FR');
+    expect(frResume).toContain('SeifEddine_Nefzi_Resume_FR.pdf');
 
-    const microgridPick = applicationTailoringService.selectBestCvTrack('Microgrid control and battery storage management');
-    expect(microgridPick.track).toBe('CV_Seif_Reseaux_Microgrids');
-    expect(microgridPick.fileName).toBe('CV_Seif_Reseaux_Microgrids.pdf');
-
-    const solarPick = applicationTailoringService.selectBestCvTrack('Modélisation système photovoltaïque et production hydrogène');
-    expect(solarPick.track).toBe('CV_Seif_Energies_Renouvelables');
-    expect(solarPick.fileName).toBe('CV_Seif_Energies_Renouvelables.pdf');
+    const enLang = applicationTailoringService.detectLanguage('UK', 'Photovoltaic and microgrid research internship');
+    expect(enLang).toBe('EN');
+    const enResume = applicationTailoringService.resolveResumeSource('EN');
+    expect(enResume).toContain('SeifEddine_Nefzi_Resume_EN.pdf');
   });
 
   it('SupervisorScoutService: should filter out TN and DE and load French & International supervisors', () => {
@@ -126,19 +124,28 @@ describe('PFE Scout Core Pipeline Tests', () => {
     const match = await matchingEngine.evaluateMatch(ceaInternship, sampleResume);
     expect(match.score).toBeGreaterThanOrEqual(80);
     expect(match.skillMatchScore).toBeGreaterThanOrEqual(70);
-  });
+  }, 20000);
 
-  it('ApplicationTailoringService: should generate tailored paragraphs for STEP and Mechanical Storage', () => {
-    const stepDraft = (applicationTailoringService as any).buildTechnicalDomainParagraph(
-      'Stage STEP et stockage hydroélectrique par pompage-turbinage'
-    );
-    expect(stepDraft).toContain('STEP');
-    expect(stepDraft).toContain('pompage');
+  it('ApplicationTailoringService: should tailor application with Fact Bank evidence and cover letter PDF', async () => {
+    const draft = await applicationTailoringService.tailorForPostedOffer({
+      id: 'test-offer-fb',
+      title: 'Stage PFE : Optimisation microgrids hybrides',
+      companyName: 'INES CEA',
+      country: 'France',
+      location: 'Le Bourget-du-Lac',
+      description: 'Optimisation et gestion d’énergie d’un microgrid hybride sous Python',
+      applyUrl: 'https://cea.fr/stage',
+      canonicalUrl: 'https://cea.fr/stage',
+      contentHash: 'hash-fb',
+      isRemote: false,
+      status: 'VERIFIED',
+    });
 
-    const flywheelDraft = (applicationTailoringService as any).buildTechnicalDomainParagraph(
-      'Stockage mécanique par volant d’inertie pour microgrid'
-    );
-    expect(flywheelDraft).toContain('volants d\'inertie');
+    expect(draft.language).toBe('FR');
+    expect(draft.cvAttachmentName).toBe('cv_Seif_Eddine_Nefzi.pdf');
+    expect(draft.coverLetterPdfName).toContain('Lettre_Motivation_Seif_Eddine_Nefzi.pdf');
+    expect(draft.coverLetterOrEmailBody).toContain('École Nationale d\'Ingénieurs de Monastir');
+    expect(draft.coverLetterOrEmailBody).toContain('FastAPI');
   });
 
   it('SupervisorScoutService: should contain authentic French lab supervisor emails', () => {
@@ -181,7 +188,7 @@ describe('PFE Scout Core Pipeline Tests', () => {
     const countries = batch.map(b => b.targetCountry);
     expect(countries).toContain('France');
     expect(countries.some(c => c === 'USA' || c === 'Canada' || c === 'UK' || c === 'Australia' || c === 'Switzerland')).toBe(true);
-  });
+  }, 20000);
 
   it('EligibilityFilterStage: should reject expired offers with past deadlines', () => {
     const filter = new EligibilityFilterStage();

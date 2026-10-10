@@ -3,7 +3,8 @@ import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { emailSenderService } from './EmailSenderService.js';
 import { getSupabaseClient } from '../database/client.js';
-import { draftRegistry } from './ApplicationTailoringService.js';
+import { draftStorageService, ApplicationDraft } from './DraftStorageService.js';
+import { archiveService } from './ArchiveService.js';
 
 export class TelegramApprovalListener {
   private offset = 0;
@@ -30,7 +31,7 @@ export class TelegramApprovalListener {
         try {
           await this.processUpdatesOnce();
         } catch (e) {
-          // Non-blocking retry
+          // Catch any connection issues and retry
         }
         await new Promise((res) => setTimeout(res, 800));
       }
@@ -55,8 +56,9 @@ export class TelegramApprovalListener {
       const response = await axios.get(`${this.botUrl}/getUpdates`, {
         params: {
           offset: this.offset,
-          timeout: 4,
+          timeout: 10,
         },
+        timeout: 15000,
       });
 
       const updates = response.data.result || [];
@@ -100,15 +102,10 @@ export class TelegramApprovalListener {
       logger.info(`⚡ [Telegram Approval] Processing application ID: ${appId}`);
 
       try {
-        const inMemDraft = draftRegistry.get(appId);
-        let targetName = inMemDraft?.targetTitle || appId;
-        let orgName = inMemDraft?.targetOrganization || 'Établissement';
-        let recipient = inMemDraft?.targetContact || '';
-        let cvName = inMemDraft ? inMemDraft.cvFileName : 'CV_Seif_Energies_Renouvelables.pdf';
-        let subject = inMemDraft?.emailSubject || 'Candidature Stage PFE';
-        let body = inMemDraft?.coverLetterOrEmailBody || '';
+        let draft: ApplicationDraft | null = draftStorageService.getDraft(appId);
 
-        if (!inMemDraft) {
+        // Fallback: check Supabase if not found locally
+        if (!draft) {
           try {
             const { data: application } = await this.supabase
               .from('applications')
@@ -117,65 +114,122 @@ export class TelegramApprovalListener {
               .single();
 
             if (application) {
-              targetName = application.target_name || targetName;
-              orgName = application.organization || orgName;
-              recipient = application.contact_info || recipient;
-              cvName = application.cv_track_used ? `${application.cv_track_used}.pdf` : cvName;
-              subject = application.email_subject || subject;
-              body = application.letter_content || body;
+              draft = {
+                id: application.id,
+                type: application.type || 'POSTED_OFFER',
+                language: 'FR',
+                targetTitle: application.target_name || appId,
+                targetOrganization: application.organization || 'Établissement',
+                targetContact: application.contact_info || '',
+                targetCountry: application.country || 'France',
+                sourceResumePath: '',
+                cvAttachmentName: 'cv_Seif_Eddine_Nefzi.pdf',
+                coverLetterPdfPath: '',
+                coverLetterPdfName: 'Lettre_Motivation_Seif_Eddine_Nefzi.pdf',
+                emailSubject: application.email_subject || 'Candidature Stage PFE',
+                coverLetterOrEmailBody: application.letter_content || '',
+                status: 'PENDING_APPROVAL',
+                generatedAt: application.created_at || new Date().toISOString(),
+              };
             }
-          } catch (dbErr) {
-            logger.warn('Draft not found in Supabase DB, falling back to defaults', { error: String(dbErr) });
-          }
+          } catch {}
         }
 
-        let isDirectEmail = Boolean(recipient && recipient.includes('@'));
-        let targetEmail = isDirectEmail ? recipient : env.SMTP_USER;
-        let targetSubject = isDirectEmail ? subject : `[Dossier Prêt] ${subject}`;
-        let targetBody = isDirectEmail
-          ? body
-          : `Bonjour Seif,\n\nVoici votre dossier prêt pour l'offre "${targetName}" chez ${orgName}.\nLien pour postuler : ${recipient}\n\n--- Lettre de motivation personnalisée ---\n\n${body}`;
+        const targetTitle = draft?.targetTitle || appId;
+        const orgName = draft?.targetOrganization || 'Organisme';
+        const rawContact = draft?.targetContact || '';
+        const isDirectEmail = Boolean(rawContact && rawContact.includes('@'));
 
-        logger.info(`📤 [Telegram Email Dispatch] Sending to: ${targetEmail} with CV: ${cvName}`);
+        const targetEmail = isDirectEmail ? rawContact : env.SMTP_USER;
+        const targetSubject = isDirectEmail ? draft?.emailSubject || `Candidature - ${targetTitle}` : `[Dossier Prêt] ${draft?.emailSubject || targetTitle}`;
+        const targetBody = isDirectEmail
+          ? draft?.coverLetterOrEmailBody || ''
+          : `Bonjour Seif,\n\nVotre candidature pour l'offre "${targetTitle}" chez ${orgName} a été validée !\nLien pour postuler : ${rawContact}\n\nVous trouverez ci-joint votre CV et votre lettre de motivation personnalisée au format PDF, prêts pour votre candidature.\n\n--- Corps du message d'accompagnement ---\n\n${draft?.coverLetterOrEmailBody || ''}`;
+
+        logger.info(`📤 [Telegram Email Dispatch] Sending to: ${targetEmail}`);
 
         const sendRes = await emailSenderService.sendApplicationEmail({
           applicationId: appId,
           to: targetEmail,
           subject: targetSubject,
           bodyText: targetBody,
-          cvFileName: cvName,
+          sourceCvPath: draft?.sourceResumePath,
+          coverLetterPath: draft?.coverLetterPdfPath,
+          coverLetterName: draft?.coverLetterPdfName,
         });
 
         logger.info(`✅ [Telegram Email Dispatch] Result: success=${sendRes.success}, messageId=${sendRes.messageId || 'none'}`);
 
-        try {
-          await this.supabase
-            .from('applications')
-            .update({ status: 'APPROVED', updated_at: new Date().toISOString() })
-            .eq('id', appId);
-        } catch {}
+        if (sendRes.success) {
+          draftStorageService.updateDraftStatus(appId, 'APPLIED');
 
-        const updatedCard = `
-✅ <b>CANDIDATURE APPROUVÉE AVEC SUCCÈS !</b>
+          // Prevent any duplicate proposals
+          if (draft) {
+            await archiveService.archiveOffers([
+              {
+                id: draft.id,
+                title: draft.targetTitle,
+                companyName: draft.targetOrganization,
+                applyUrl: draft.targetContact,
+                canonicalUrl: draft.targetContact,
+                contentHash: draft.id,
+                country: draft.targetCountry,
+                isRemote: false,
+                status: 'ARCHIVED' as const,
+              } as any,
+            ]);
+          }
 
-🎯 <b>Sujet :</b> ${this.escapeHtml(targetName)}
+          const attachmentsText = (sendRes.attachmentsSent || ['cv_Seif_Eddine_Nefzi.pdf']).map((a) => `• 📎 <code>${this.escapeHtml(a)}</code>`).join('\n');
+
+          const updatedCard = `
+✅ <b>CANDIDATURE APPROUVÉE & EXPÉDIÉE AVEC SUCCÈS !</b>
+
+🎯 <b>Sujet :</b> ${this.escapeHtml(targetTitle)}
 🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
 📧 <b>Destinataire :</b> <code>${this.escapeHtml(targetEmail)}</code>
-📄 <b>CV joint :</b> <code>${this.escapeHtml(cvName)}</code>
 📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>
-⏰ <b>Date de traitement :</b> <i>${timestamp}</i>
+📨 <b>Message ID :</b> <code>${this.escapeHtml(sendRes.messageId || 'dispatch-ok')}</code>
+
+<b>Documents joints :</b>
+${attachmentsText}
+
+⏰ <b>Traitée le :</b> <i>${timestamp}</i>
 `.trim();
 
-        // Edit the message in-place on Telegram and remove buttons
-        await axios.post(`${this.botUrl}/editMessageText`, {
-          chat_id: chatId,
-          message_id: messageId,
-          text: updatedCard,
-          parse_mode: 'HTML',
-          reply_markup: { inline_keyboard: [] },
-        });
+          // Edit the message in-place on Telegram and remove buttons
+          await axios.post(`${this.botUrl}/editMessageText`, {
+            chat_id: chatId,
+            message_id: messageId,
+            text: updatedCard,
+            parse_mode: 'HTML',
+            reply_markup: { inline_keyboard: [] },
+          });
 
-        logger.info(`📱 [Telegram Card Updated] Message ${messageId} successfully transformed to APPROVED.`);
+          logger.info(`📱 [Telegram Card Updated] Message ${messageId} successfully transformed to APPROVED.`);
+        } else {
+          // Report failure clearly on Telegram so user is never left in the dark
+          const errorCard = `
+⚠️ <b>ÉCHEC DE L'ENVOI DE LA CANDIDATURE</b>
+
+🎯 <b>Sujet :</b> ${this.escapeHtml(targetTitle)}
+🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
+❌ <b>Erreur :</b> <code>${this.escapeHtml(sendRes.error || 'Erreur inconnue lors du dispatch SMTP')}</code>
+⏰ <b>Date :</b> <i>${timestamp}</i>
+`.trim();
+
+          await axios.post(`${this.botUrl}/editMessageText`, {
+            chat_id: chatId,
+            message_id: messageId,
+            text: errorCard,
+            parse_mode: 'HTML',
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '🔄 Réessayer', callback_data: `approve_${appId}` }],
+              ],
+            },
+          });
+        }
       } catch (err) {
         logger.error('❌ Error handling approval callback', { error: String(err) });
       }
@@ -184,36 +238,32 @@ export class TelegramApprovalListener {
       logger.info(`🚫 [Telegram Rejection] Processing application ID: ${appId}`);
 
       try {
-        const inMemDraft = draftRegistry.get(appId);
-        let targetName = inMemDraft?.targetTitle || appId;
-        let orgName = inMemDraft?.targetOrganization || 'Établissement';
+        const draft = draftStorageService.getDraft(appId);
+        const targetTitle = draft?.targetTitle || appId;
+        const orgName = draft?.targetOrganization || 'Établissement';
 
-        if (!inMemDraft) {
-          try {
-            const { data: application } = await this.supabase
-              .from('applications')
-              .select('target_name, organization')
-              .eq('id', appId)
-              .single();
+        draftStorageService.updateDraftStatus(appId, 'REJECTED');
 
-            if (application) {
-              targetName = application.target_name || targetName;
-              orgName = application.organization || orgName;
-            }
-          } catch {}
+        if (draft) {
+          await archiveService.archiveOffers([
+            {
+              id: draft.id,
+              title: draft.targetTitle,
+              companyName: draft.targetOrganization,
+              applyUrl: draft.targetContact,
+              canonicalUrl: draft.targetContact,
+              contentHash: draft.id,
+              country: draft.targetCountry,
+              isRemote: false,
+              status: 'ARCHIVED' as const,
+            } as any,
+          ]);
         }
-
-        try {
-          await this.supabase
-            .from('applications')
-            .update({ status: 'REJECTED', updated_at: new Date().toISOString() })
-            .eq('id', appId);
-        } catch {}
 
         const updatedCard = `
 ❌ <b>CANDIDATURE REJETÉE ET ARCHIVÉE</b>
 
-🎯 <b>Sujet :</b> ${this.escapeHtml(targetName)}
+🎯 <b>Sujet :</b> ${this.escapeHtml(targetTitle)}
 🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
 📁 <i>Cette opportunité a été classée dans votre dossier fermé et ne sera plus proposée.</i>
 ⏰ <b>Date :</b> <i>${timestamp}</i>
@@ -245,8 +295,3 @@ export class TelegramApprovalListener {
 }
 
 export const telegramApprovalListener = new TelegramApprovalListener();
-
-// Auto-start listener on boot
-if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
-  telegramApprovalListener.startPolling();
-}

@@ -1,6 +1,12 @@
+import path from 'path';
+import fs from 'fs';
 import { CanonicalInternship } from '../models/DomainModels.js';
 import { getSupabaseClient } from '../database/client.js';
 import { logger } from '../utils/logger.js';
+import { latexCoverLetterService } from './LatexCoverLetterService.js';
+import { draftStorageService, ApplicationDraft } from './DraftStorageService.js';
+
+export type { ApplicationDraft } from './DraftStorageService.js';
 
 export interface SupervisorRecord {
   name: string;
@@ -12,207 +18,275 @@ export interface SupervisorRecord {
   relevanceScore?: number;
 }
 
-export type CvTrack =
-  | 'CV_Seif_Energies_Renouvelables'
-  | 'CV_Seif_Thermicien'
-  | 'CV_Seif_Efficacite_Energetique'
-  | 'CV_Seif_Reseaux_Microgrids';
-
-export interface ApplicationDraft {
-  id: string;
-  type: 'POSTED_OFFER' | 'COLD_SUPERVISOR';
-  targetTitle: string;
-  targetOrganization: string;
-  targetContact: string;
-  targetCountry: string;
-  selectedCvTrack: CvTrack;
-  cvFileName: string;
-  emailSubject: string;
-  coverLetterOrEmailBody: string;
-  status: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
-  generatedAt: string;
-}
-
-export const draftRegistry = new Map<string, ApplicationDraft>();
+// Backwards compatibility map proxying draftStorageService
+export const draftRegistry = {
+  get(id: string): ApplicationDraft | undefined {
+    return draftStorageService.getDraft(id) || undefined;
+  },
+  set(id: string, draft: ApplicationDraft) {
+    draftStorageService.saveDraft(draft);
+  },
+  has(id: string): boolean {
+    return Boolean(draftStorageService.getDraft(id));
+  },
+};
 
 export class ApplicationTailoringService {
   private supabase = getSupabaseClient();
+  private resumesDir = path.join(process.cwd(), 'data', 'resumes');
 
   /**
-   * Cleans text from raw symbols, internal job IDs, and markdown artifacts
+   * Cleans text from raw symbols, job IDs, and markdown artifacts
    */
   cleanHumanText(text: string): string {
     if (!text) return '';
     return text
-      .replace(/^[0-9]{4}-[0-9]+\s*-\s*/, '') // Remove job codes like 2026-42019 -
-      .replace(/\bH\/F\b|\bF\/H\b|\b(h\/f)\b/gi, '') // Remove HR gender tags
-      .replace(/[_\*#`~\[\]]/g, ' ') // Remove markdown / underscore symbols
+      .replace(/^[0-9]{4}-[0-9]+\s*-\s*/, '')
+      .replace(/\bH\/F\b|\bF\/H\b|\b(h\/f)\b/gi, '')
+      .replace(/[_\*#`~\[\]]/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   }
 
   /**
-   * Determine the best CV track based on text keywords
+   * Detect language (FR or EN) based on country and text
    */
-  selectBestCvTrack(text: string): { track: CvTrack; fileName: string; naturalDescription: string } {
-    const t = text.toLowerCase();
+  detectLanguage(country: string, text: string): 'FR' | 'EN' {
+    const c = (country || '').toLowerCase();
+    const t = (text || '').toLowerCase();
 
-    // 1. Reseaux / Microgrids / Power Systems / Grid Integration
-    if (
-      t.includes('microgrid') ||
-      t.includes('smart grid') ||
-      t.includes('réseau') ||
-      t.includes('reseau') ||
-      t.includes('électron') ||
-      t.includes('electron') ||
-      t.includes('power system') ||
-      t.includes('grid integration') ||
-      t.includes('onduleur') ||
-      t.includes('convertisseur') ||
-      t.includes('ems')
-    ) {
-      return {
-        track: 'CV_Seif_Reseaux_Microgrids',
-        fileName: 'CV_Seif_Reseaux_Microgrids.pdf',
-        naturalDescription: 'spécialisé en réseaux électriques intelligents, microgrids et électronique de puissance',
-      };
+    if (c === 'france' || c === 'fr' || c === 'quebec' || c === 'suisse' || c === 'belgique') {
+      return 'FR';
     }
 
-    // 2. Thermicien / Thermal Systems / Heat Exchangers
     if (
-      t.includes('thermiq') ||
-      t.includes('heat') ||
-      t.includes('chaleur') ||
-      t.includes('thermodynam') ||
-      t.includes('échangeur') ||
-      t.includes('echangeur') ||
-      t.includes('four') ||
-      t.includes('combustion') ||
-      t.includes('pyrolyse') ||
-      t.includes('cfd')
+      t.includes('stage') ||
+      t.includes('candidature') ||
+      t.includes('école') ||
+      t.includes('ingénieur') ||
+      t.includes('énergétique') ||
+      t.includes('systèmes')
     ) {
-      return {
-        track: 'CV_Seif_Thermicien',
-        fileName: 'CV_Seif_Thermicien.pdf',
-        naturalDescription: 'spécialisé en génie thermique, thermodynamique appliquée et échangeurs de chaleur',
-      };
+      return 'FR';
     }
 
-    // 3. Efficacité Énergétique / Energy Efficiency
-    if (
-      t.includes('efficacit') ||
-      t.includes('audit') ||
-      t.includes('optimis') ||
-      t.includes('industr') ||
-      t.includes('décarbon') ||
-      t.includes('decarbon') ||
-      t.includes('bâtiment') ||
-      t.includes('consommation')
-    ) {
-      return {
-        track: 'CV_Seif_Efficacite_Energetique',
-        fileName: 'CV_Seif_Efficacite_Energetique.pdf',
-        naturalDescription: 'orienté vers l’audit énergétique industriel, l’optimisation des procédés et la décarbonation',
-      };
-    }
-
-    // 4. Default: Energies Renouvelables (Solar PV, BESS, STEP, Mechanical Storage, Hydrogen)
-    return {
-      track: 'CV_Seif_Energies_Renouvelables',
-      fileName: 'CV_Seif_Energies_Renouvelables.pdf',
-      naturalDescription: 'spécialisé en énergies renouvelables (solaire photovoltaïque) et systèmes de stockage d’énergie',
-    };
+    return 'EN';
   }
 
   /**
-   * Build domain-specific customized paragraph
+   * Resolve Resume file path according to language
+   * Both will always be attached as "cv_Seif_Eddine_Nefzi.pdf"
    */
-  private buildTechnicalDomainParagraph(text: string): string {
-    const t = text.toLowerCase();
+  resolveResumeSource(language: 'FR' | 'EN'): string {
+    const fileName = language === 'FR' ? 'SeifEddine_Nefzi_Resume_FR.pdf' : 'SeifEddine_Nefzi_Resume_EN.pdf';
+    const localPath = path.join(this.resumesDir, fileName);
 
-    // A. STEP (Station de Transfert d'Énergie par Pompage / Hydro storage)
-    if (t.includes('step') || t.includes('pompage') || t.includes('hydro') || t.includes('turbinage')) {
-      return `Particulièrement passionné par le stockage massif et l'hydroélectricité (STEP), j'ai développé une solide maîtrise des bilans thermodynamiques et hydrauliques, ainsi que de la modélisation sous MATLAB et Simulink pour l'optimisation des cycles de turbinage et pompage et la régulation de fréquence sur les réseaux électriques.`;
+    if (fs.existsSync(localPath)) {
+      return localPath;
     }
 
-    // B. Mechanical Storage (Flywheels, CAES, compressed air)
-    if (t.includes('mécanique') || t.includes('mecanique') || t.includes('volant') || t.includes('flywheel') || t.includes('air comprimé') || t.includes('caes')) {
-      return `Attiré par les solutions innovantes de stockage mécanique (volants d'inertie, CAES), j'allie une formation rigoureuse en mécanique des fluides et thermodynamique à une capacité éprouvée de simulation dynamique sous MATLAB, Simulink et Python pour l'analyse des rendements et de la réponse transitoire.`;
+    // Fallback if not found in data/resumes
+    const rootPath = path.join(process.cwd(), fileName);
+    if (fs.existsSync(rootPath)) {
+      return rootPath;
     }
 
-    // C. Microgrids & Smart Grids
-    if (t.includes('microgrid') || t.includes('smart grid') || t.includes('réseau') || t.includes('reseau') || t.includes('ems')) {
-      return `Spécialisé dans les réseaux intelligents et les microgrids, j'ai notamment mené des projets de modélisation de flux de puissance et d'algorithmes de gestion d'énergie (EMS) sous MATLAB et Python, en intégrant des sources renouvelables intermittentes et des systèmes de stockage hybrides.`;
-    }
-
-    // D. Solar PV & Solar Tracking
-    if (t.includes('solaire') || t.includes('solar') || t.includes('pv') || t.includes('photovolta')) {
-      return `Ayant dirigé la conception et le prototypage d'un suiveur solaire autonome à deux axes à l'ENIM, je dispose d'une expérience concrète en dimensionnement photovoltaïque (PVsyst, Python), en instrumentation, régulation MPPT et optimisation du rendement sous conditions réelles.`;
-    }
-
-    // E. Battery & BESS Storage
-    if (t.includes('batter') || t.includes('bess') || t.includes('stockage') || t.includes('storage')) {
-      return `Très investi dans les technologies de stockage stationnaire par batterie (BESS) et leur couplage aux sources renouvelables, je maîtrise la modélisation électrothermique, l'estimation des états de charge et de santé (SoC et SoH) et la gestion optimale de la charge pour la stabilisation du réseau.`;
-    }
-
-    // F. Thermal & Heat Exchangers
-    if (t.includes('thermiq') || t.includes('chaleur') || t.includes('échangeur') || t.includes('echangeur') || t.includes('four')) {
-      return `Fort d'expériences industrielles concrètes lors d'optimisations thermiques à la SOTULUB (fours et échangeurs de chaleur) et d'analyses de production à la CTKCP, j'applique avec rigueur les méthodes de calcul de transferts thermiques et de dimensionnement d'échangeurs sous contraintes sévères.`;
-    }
-
-    // Default Renewable Energy paragraph
-    return `Mon parcours m'a permis d'allier rigueur théorique et réalisations pratiques : conception d'un suiveur solaire autonome à l'ENIM, modélisation dynamique de systèmes énergétiques sous MATLAB et Python, et réalisation d'audits thermiques industriels à la SOTULUB.`;
+    return localPath;
   }
 
   /**
-   * Generate customized application for a posted internship offer
+   * Select 2-3 matched requirement bullets for published offer (Section 4 menu)
+   */
+  private selectPublishedOfferBullets(combinedText: string, language: 'FR' | 'EN'): string[] {
+    const t = combinedText.toLowerCase();
+    const bullets: string[] = [];
+
+    if (language === 'FR') {
+      // 1. Optimisation / microgrids
+      if (t.includes('microgrid') || t.includes('ems') || t.includes('optimis') || t.includes('réseau') || t.includes('reseau')) {
+        bullets.push(
+          "- Optimisation et gestion d'énergie : développement d'un système de gestion d'énergie pour un microgrid hybride sous Python, avec un backend FastAPI, comparant quatre méthodes d'optimisation (programmation dynamique, algorithme génétique, optimisation par essaim de particules et programmation linéaire)"
+        );
+      }
+
+      // 2. Python / MATLAB / simulation
+      if (t.includes('python') || t.includes('matlab') || t.includes('simul') || t.includes('modélis') || t.includes('modelis')) {
+        bullets.push(
+          "- Simulation et modélisation : simulation sous Python et MATLAB dans mes projets, dont la simulation de la performance annuelle d'un suiveur solaire pour Zarzis, Tunisie (résultats de simulation)"
+        );
+      }
+
+      // 3. Photovoltaïque / Solaire
+      if (t.includes('photovolta') || t.includes('solaire') || t.includes('solar') || t.includes('pv')) {
+        bullets.push(
+          "- Dimensionnement photovoltaïque : dimensionnement d'installations photovoltaïques et réalisation d'études techniques lors de mon stage chez Zenith Solar Engineering (juin 2026)"
+        );
+      }
+
+      // 4. Efficacité énergétique / Chaleur fatale
+      if (t.includes('efficacit') || t.includes('chaleur') || t.includes('procéd') || t.includes('proced') || t.includes('audit')) {
+        bullets.push(
+          "- Efficacité énergétique et procédés : analyse de la consommation énergétique d'un procédé de régénération d'huiles usagées et étude de la récupération de chaleur fatale lors de mon stage chez SOTULUB (Société Tunisienne des Lubrifiants, août 2025)"
+        );
+      }
+
+      // 5. Stockage par batteries
+      if (t.includes('batter') || t.includes('stockage') || t.includes('storage') || t.includes('bess')) {
+        bullets.push(
+          "- Stockage par batteries : formation en systèmes de stockage d'énergie par batteries pour les services système du réseau chez RENAC (Renewables Academy), score 96,67 %"
+        );
+      }
+
+      // Fallback French bullets to guarantee 2-3 solid matches
+      if (bullets.length < 2) {
+        bullets.push(
+          "- Modélisation de systèmes : simulation numérique sous Python et MATLAB de systèmes énergétiques et comparaison de méthodes d'optimisation"
+        );
+        bullets.push(
+          "- Expérience concrète de terrain : études d'efficacité énergétique et de dimensionnement lors de stages industriels chez SOTULUB et Zenith Solar Engineering"
+        );
+      }
+    } else {
+      // English
+      if (t.includes('microgrid') || t.includes('ems') || t.includes('optimis') || t.includes('grid')) {
+        bullets.push(
+          '- Optimization and energy management: built an energy management system for a hybrid microgrid in Python, with a FastAPI backend, comparing four optimization methods (dynamic programming, genetic algorithm, particle swarm optimization and linear programming)'
+        );
+      }
+
+      if (t.includes('python') || t.includes('matlab') || t.includes('simul') || t.includes('model')) {
+        bullets.push(
+          '- Simulation and modelling: Python and MATLAB simulation in my projects, including the annual performance simulation of a solar tracker for Zarzis, Tunisia (simulation results)'
+        );
+      }
+
+      if (t.includes('photovolta') || t.includes('solar') || t.includes('pv')) {
+        bullets.push(
+          '- Photovoltaic design and sizing: sized photovoltaic installations and carried out technical studies during my internship at Zenith Solar Engineering (June 2026)'
+        );
+      }
+
+      if (t.includes('efficien') || t.includes('heat') || t.includes('process') || t.includes('audit')) {
+        bullets.push(
+          '- Energy efficiency and process: analysed the energy use of a used-oil regeneration process and studied waste heat recovery during my internship at SOTULUB (Tunisian Lubricants Company, August 2025)'
+        );
+      }
+
+      if (t.includes('batter') || t.includes('storage') || t.includes('bess')) {
+        bullets.push(
+          '- Battery storage: trained in Battery Energy Storage Systems for Grid Ancillary Services at RENAC (Renewables Academy), score 96.67%'
+        );
+      }
+
+      // Fallback English bullets
+      if (bullets.length < 2) {
+        bullets.push(
+          '- Energy systems modelling: numerical simulation in Python and MATLAB, and benchmarking of optimization algorithms'
+        );
+        bullets.push(
+          '- Practical engineering: hands-on sizing and industrial energy audit experience at Zenith Solar Engineering and SOTULUB'
+        );
+      }
+    }
+
+    return bullets.slice(0, 3);
+  }
+
+  /**
+   * Tailor application for a PUBLISHED internship offer
    */
   async tailorForPostedOffer(offer: CanonicalInternship): Promise<ApplicationDraft> {
     const cleanTitle = this.cleanHumanText(offer.title);
     const cleanCompany = this.cleanHumanText(offer.companyName);
     const combined = `${cleanTitle} ${offer.description || ''} ${cleanCompany}`;
-    const cvSelection = this.selectBestCvTrack(combined);
-    const domainHighlight = this.buildTechnicalDomainParagraph(combined);
-
-    const subject = `Candidature Stage PFE / Fin d'études — ${cleanTitle} — Seif Eddine Nefzi`;
-
-    const body = `Madame, Monsieur,
-
-Étudiant en 3ème année du cycle ingénieur en Génie Énergétique à l'École Nationale d'Ingénieurs de Monastir (ENIM) et préparant en parallèle un Master de Recherche en Énergétique, je vous présente avec grand enthousiasme ma candidature pour le stage de fin d'études : "${cleanTitle}".
-
-${domainHighlight}
-
-Rejoindre ${cleanCompany} sur cette thématique constitue l'aboutissement naturel de mon projet professionnel. Mes compétences en simulation numérique (Python, MATLAB, Simulink), dimensionnement énergétique et instrumentation me permettront d'être immédiatement opérationnel et de contribuer activement aux objectifs de votre équipe lors de ce stage de 6 mois (début 2027).
-
-Vous trouverez ci-joint mon curriculum vitae (${cvSelection.naturalDescription}). Je reste à votre entière disposition pour convenir d'un entretien.
-
-Veuillez agréer, Madame, Monsieur, l'expression de mes salutations les plus distinguées.
-
-Seif Eddine Nefzi
-Élève-Ingénieur en Génie Énergétique & Master Recherche — ENIM
-Téléphone : (+216) 20 016 808
-Email : nefzi.seifeddine@enim.u-monastir.tn`;
+    const language = this.detectLanguage(offer.country, combined);
+    const resumeSourcePath = this.resolveResumeSource(language);
+    const cvAttachmentName = 'cv_Seif_Eddine_Nefzi.pdf';
 
     const draftId = offer.id || `offer_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+    // Generate customized LaTeX Cover Letter PDF
+    const coverLetterResult = await latexCoverLetterService.generateCoverLetter({
+      id: draftId,
+      language,
+      organization: cleanCompany,
+      positionTitle: cleanTitle,
+      cityCountry: offer.location || offer.country,
+      topicText: offer.description,
+      specificReason: cleanTitle,
+    });
+
+    const bullets = this.selectPublishedOfferBullets(combined, language);
+    let subject = '';
+    let emailBody = '';
+
+    if (language === 'FR') {
+      subject = `Candidature - ${cleanTitle} - Seif Eddine Nefzi`;
+      emailBody = `Madame, Monsieur,
+
+Je vous adresse ma candidature pour l'offre « ${cleanTitle} » chez ${cleanCompany}. Je suis en dernière année du cycle ingénieur en Génie Énergétique, spécialité Énergies Renouvelables, à l'ENIM (École Nationale d'Ingénieurs de Monastir), en parallèle d'un Master de recherche en Gestion des Systèmes Énergétiques, et je suis disponible pour 4 à 6 mois à partir de janvier 2027.
+
+Votre offre correspond à mon parcours sur les points essentiels :
+${bullets.join('\n')}
+
+Ce qui m'attire dans cette offre, c'est le travail sur ${cleanTitle}, directement relié à mes compétences en simulation et dimensionnement de systèmes énergétiques.
+
+Vous trouverez ci-joint mon CV et ma lettre de motivation. Je serais ravi de vous présenter ma candidature lors d'un entretien, à la date qui vous conviendrait.
+
+Je vous remercie de l'attention portée à ma candidature.
+
+Bien cordialement,
+Seif Eddine Nefzi
+ENIM (École Nationale d'Ingénieurs de Monastir) - Génie Énergétique
+(+216) 20 016 808
+seifeddinenefzi000@gmail.com
+linkedin.com/in/nefzi-seifeddine`;
+    } else {
+      subject = `Application - ${cleanTitle} - Seif Eddine Nefzi`;
+      emailBody = `Dear Hiring Team,
+
+I am applying for the ${cleanTitle} role at ${cleanCompany}. I am in my final year of the Engineering Degree in Energy Engineering (Renewable Energies track) at ENIM (National Engineering School of Monastir), alongside a Research Master's in Energy Systems Management, and I am available for 4 to 6 months from January 2027.
+
+Your offer matches my background on the points that matter most:
+${bullets.join('\n')}
+
+What attracts me in this offer is the focus on ${cleanTitle}, which is closely aligned with my work in simulation and energy systems modelling.
+
+Please find attached my CV and my cover letter. I would be glad to discuss my application in an interview, at a time that suits you.
+
+Thank you for your time and consideration.
+
+Kind regards,
+Seif Eddine Nefzi
+ENIM (National Engineering School of Monastir) - Energy Engineering
+(+216) 20 016 808
+seifeddinenefzi000@gmail.com
+linkedin.com/in/nefzi-seifeddine`;
+    }
+
     const draft: ApplicationDraft = {
       id: draftId,
       type: 'POSTED_OFFER',
+      language,
       targetTitle: cleanTitle,
       targetOrganization: cleanCompany,
-      targetContact: offer.applyUrl,
+      targetContact: offer.applyUrl || offer.canonicalUrl,
       targetCountry: offer.country || 'France',
-      selectedCvTrack: cvSelection.track,
-      cvFileName: cvSelection.fileName,
+      sourceResumePath: resumeSourcePath,
+      cvAttachmentName,
+      coverLetterPdfPath: coverLetterResult.pdfPath,
+      coverLetterPdfName: coverLetterResult.pdfFileName,
+      coverLetterTexPath: coverLetterResult.texPath,
       emailSubject: subject,
-      coverLetterOrEmailBody: body,
+      coverLetterOrEmailBody: emailBody,
       status: 'PENDING_APPROVAL',
       generatedAt: new Date().toISOString(),
     };
 
-    // Store in-memory registry for instant Telegram callback retrieval
-    draftRegistry.set(draft.id, draft);
+    // Save to persistent storage
+    draftStorageService.saveDraft(draft);
 
-    // Persist in Supabase applications table
+    // Save to Supabase if available
     try {
       await this.supabase.from('applications').upsert({
         id: draft.id,
@@ -221,7 +295,7 @@ Email : nefzi.seifeddine@enim.u-monastir.tn`;
         organization: draft.targetOrganization,
         contact_info: draft.targetContact,
         country: draft.targetCountry,
-        cv_track_used: draft.selectedCvTrack,
+        cv_track_used: cvAttachmentName,
         email_subject: draft.emailSubject,
         letter_content: draft.coverLetterOrEmailBody,
         status: 'PENDING_APPROVAL',
@@ -234,59 +308,136 @@ Email : nefzi.seifeddine@enim.u-monastir.tn`;
   }
 
   /**
-   * Generate customized cold email for a research supervisor
+   * Tailor application for a COLD SUPERVISOR outreach
    */
   async tailorForSupervisor(supervisor: SupervisorRecord): Promise<ApplicationDraft> {
     const cleanPub = this.cleanHumanText(supervisor.recentPublication);
     const cleanTopic = this.cleanHumanText(supervisor.searchTopic);
     const cleanInst = this.cleanHumanText(supervisor.institution);
+    const cleanName = supervisor.name.replace(/^Prof\.\s*|^Dr\.\s*/i, '').trim();
+    const salutationName = supervisor.name.startsWith('Prof') ? `Professeur ${cleanName}` : `Docteur ${cleanName}`;
+    const salutationNameEn = supervisor.name.startsWith('Prof') ? `Professor ${cleanName}` : `Dr. ${cleanName}`;
+
     const combined = `${cleanPub} ${cleanTopic} ${cleanInst}`;
-    const cvSelection = this.selectBestCvTrack(combined);
-    const domainHighlight = this.buildTechnicalDomainParagraph(combined);
-
-    const subject = `Candidature Stage Master 2 / PFE — Recherche en Énergétique — Seif Eddine Nefzi`;
-
-    const body = `Bonjour Professeur ${supervisor.name},
-
-Je suis élève-ingénieur en 3ème année de Génie Énergétique à l'École Nationale d'Ingénieurs de Monastir (ENIM), tout en préparant simultanément un Master de Recherche en Énergétique.
-
-J'ai pris connaissance avec un grand intérêt de vos travaux au sein de ${cleanInst}, notamment sur "${cleanPub}". Vos recherches dans le domaine de "${cleanTopic}" correspondent directement à mon projet de spécialisation en recherche et développement.
-
-${domainHighlight}
-
-Dans la perspective de mon Projet de Fin d'Études (PFE / Stage Master 2 de 6 mois, début 2027), je souhaite vivement rejoindre votre groupe de recherche afin de participer à vos projets en cours sur la transition et les systèmes énergétiques.
-
-Je joins à ce message mon curriculum vitae (${cvSelection.naturalDescription}) résumant mon parcours académique et mes compétences techniques.
-
-Seriez-vous disponible pour un court échange afin d'évoquer d'éventuelles opportunités d'accueil au sein de votre laboratoire ?
-
-En vous remerciant sincèrement pour votre temps et votre bienveillance, je vous prie d'agréer, Professeur, l'expression de mes salutations les plus respectueuses.
-
-Seif Eddine Nefzi
-Élève-Ingénieur Génie Énergétique & Master Recherche — ENIM
-Téléphone : (+216) 20 016 808
-Email : nefzi.seifeddine@enim.u-monastir.tn`;
+    const language = this.detectLanguage(supervisor.country, combined);
+    const resumeSourcePath = this.resolveResumeSource(language);
+    const cvAttachmentName = 'cv_Seif_Eddine_Nefzi.pdf';
 
     const draftId = `sup_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+
+    // Generate customized LaTeX Cover Letter PDF
+    const coverLetterResult = await latexCoverLetterService.generateCoverLetter({
+      id: draftId,
+      language,
+      organization: cleanInst,
+      positionTitle: `Stage Master 2 / PFE : ${cleanTopic}`,
+      cityCountry: supervisor.country,
+      topicText: `${cleanTopic} ${cleanPub}`,
+      specificReason: cleanPub,
+    });
+
+    let subject = '';
+    let emailBody = '';
+
+    if (language === 'FR') {
+      subject = `Candidature stage Master 2 / PFE — ${cleanTopic} — Seif Eddine Nefzi`;
+
+      let p3Proof =
+        "j'ai développé un système de gestion d'énergie pour microréseau hybride sous Python, comparant quatre méthodes d'optimisation (programmation dynamique, algorithme génétique, essaim de particules, programmation linéaire)";
+      const t = combined.toLowerCase();
+      if (t.includes('solaire') || t.includes('solar') || t.includes('tracker')) {
+        p3Proof =
+          "j'ai conçu un suiveur solaire à actionneur unique (concours IEEE Zucker), atteignant en simulation sous Python un rendement de 134 % par rapport au plan fixe (résultats de simulation)";
+      } else if (t.includes('thermiq') || t.includes('chaleur') || t.includes('audit')) {
+        p3Proof =
+          "j'ai mené des études d'efficacité énergétique et de récupération de chaleur fatale industrielle chez SOTULUB (Société Tunisienne des Lubrifiants)";
+      } else if (t.includes('batter') || t.includes('stockage') || t.includes('storage')) {
+        p3Proof =
+          "je suis certifié par la RENAC en systèmes de stockage par batteries pour les services réseau (score 96,67 %) et en IA appliquée aux énergies renouvelables";
+      }
+
+      emailBody = `Bonjour ${salutationName},
+
+Je suis en dernière année du cycle ingénieur en Génie Énergétique à l'ENIM (École Nationale d'Ingénieurs de Monastir), en parallèle d'un Master de recherche en Gestion des Systèmes Énergétiques. Je recherche un stage de fin d'études de 4 à 6 mois à partir de janvier 2027.
+
+J'ai découvert avec beaucoup d'intérêt vos travaux récents au sein de ${cleanInst}, notamment sur « ${cleanPub} ». Vos approches dans le domaine de ${cleanTopic} rejoignent précisément mon intérêt pour la transition et l'optimisation des systèmes énergétiques.
+
+De mon côté, ${p3Proof}.
+
+Auriez-vous une opportunité de stage au sein de votre équipe pour le premier semestre 2027 ? Si ce n'est pas le cas, auriez-vous l'amabilité de m'orienter vers un collègue travaillant sur des thématiques connexes ?
+
+Vous trouverez ci-joint mon CV et ma lettre de motivation.
+
+En vous remerciant sincèrement pour votre attention et vos conseils.
+
+Bien cordialement,
+Seif Eddine Nefzi
+ENIM (École Nationale d'Ingénieurs de Monastir) - Génie Énergétique
+(+216) 20 016 808
+seifeddinenefzi000@gmail.com
+linkedin.com/in/nefzi-seifeddine`;
+    } else {
+      subject = `Graduation internship application — ${cleanTopic} — Seif Eddine Nefzi`;
+
+      let p3Proof =
+        'I built a hybrid microgrid energy management system in Python, benchmarking four optimization methods (dynamic programming, genetic algorithm, particle swarm optimization, linear programming)';
+      const t = combined.toLowerCase();
+      if (t.includes('solar') || t.includes('photovolta') || t.includes('tracker')) {
+        p3Proof =
+          'I designed a single-actuator kinematic solar tracker for the IEEE Zucker Design Contest, achieving in Python simulation a 134% yield compared to fixed tilt (simulation results)';
+      } else if (t.includes('heat') || t.includes('thermo') || t.includes('audit')) {
+        p3Proof =
+          'I conducted industrial energy audits and waste heat recovery studies during my internship at SOTULUB (Tunisian Lubricants Company)';
+      } else if (t.includes('batter') || t.includes('storage')) {
+        p3Proof =
+          'I am certified by RENAC in Battery Energy Storage Systems for grid ancillary services (96.67% score) and AI for renewable energy';
+      }
+
+      emailBody = `Dear ${salutationNameEn},
+
+I am in my final year of the Energy Engineering degree at ENIM (National Engineering School of Monastir), alongside a Research Master's in Energy Systems Management. I am seeking a 4 to 6 month graduation internship starting in January 2027.
+
+I followed with great interest your recent work at ${cleanInst}, particularly on "${cleanPub}". Your research in ${cleanTopic} aligns directly with the challenges I wish to tackle.
+
+On my end, ${p3Proof}.
+
+Would you have an opening for a research intern in your group for the first semester of 2027? If not, would you happen to know a colleague working on related topics whom I could contact?
+
+Please find attached my CV and my cover letter.
+
+Thank you very much for your time and guidance.
+
+Kind regards,
+Seif Eddine Nefzi
+ENIM (National Engineering School of Monastir) - Energy Engineering
+(+216) 20 016 808
+seifeddinenefzi000@gmail.com
+linkedin.com/in/nefzi-seifeddine`;
+    }
+
     const draft: ApplicationDraft = {
       id: draftId,
       type: 'COLD_SUPERVISOR',
+      language,
       targetTitle: `PFE Recherche : ${cleanTopic}`,
       targetOrganization: cleanInst,
       targetContact: supervisor.email,
       targetCountry: supervisor.country,
-      selectedCvTrack: cvSelection.track,
-      cvFileName: cvSelection.fileName,
+      sourceResumePath: resumeSourcePath,
+      cvAttachmentName,
+      coverLetterPdfPath: coverLetterResult.pdfPath,
+      coverLetterPdfName: coverLetterResult.pdfFileName,
+      coverLetterTexPath: coverLetterResult.texPath,
       emailSubject: subject,
-      coverLetterOrEmailBody: body,
+      coverLetterOrEmailBody: emailBody,
       status: 'PENDING_APPROVAL',
       generatedAt: new Date().toISOString(),
     };
 
-    // Store in-memory registry for instant Telegram callback retrieval
-    draftRegistry.set(draft.id, draft);
+    // Save to persistent storage
+    draftStorageService.saveDraft(draft);
 
-    // Persist in Supabase applications table
+    // Save to Supabase if available
     try {
       await this.supabase.from('applications').upsert({
         id: draft.id,
@@ -295,7 +446,7 @@ Email : nefzi.seifeddine@enim.u-monastir.tn`;
         organization: draft.targetOrganization,
         contact_info: draft.targetContact,
         country: draft.targetCountry,
-        cv_track_used: draft.selectedCvTrack,
+        cv_track_used: cvAttachmentName,
         email_subject: draft.emailSubject,
         letter_content: draft.coverLetterOrEmailBody,
         status: 'PENDING_APPROVAL',
@@ -309,4 +460,3 @@ Email : nefzi.seifeddine@enim.u-monastir.tn`;
 }
 
 export const applicationTailoringService = new ApplicationTailoringService();
-
