@@ -81,18 +81,23 @@ export class TelegramApprovalListener {
 
     if (!callbackData) return;
 
-    // Acknowledge the callback immediately
+    logger.info(`📥 [Telegram Callback] Action triggered: "${callbackData}" from chat ${chatId}`);
+
+    // Acknowledge the callback immediately to remove loading spinner in Telegram
     try {
       await axios.post(`${this.botUrl}/answerCallbackQuery`, {
         callback_query_id: callbackQuery.id,
+        text: 'Action reçue ! Traitement en cours...',
       });
-    } catch {}
+    } catch (e) {
+      logger.warn('Could not acknowledge callback query', { error: String(e) });
+    }
 
     const timestamp = new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' });
 
     if (callbackData.startsWith('approve_')) {
       const appId = callbackData.replace('approve_', '');
-      logger.info(`Telegram approval received for application: ${appId}`);
+      logger.info(`⚡ [Telegram Approval] Processing application ID: ${appId}`);
 
       try {
         const inMemDraft = draftRegistry.get(appId);
@@ -119,35 +124,29 @@ export class TelegramApprovalListener {
               subject = application.email_subject || subject;
               body = application.letter_content || body;
             }
-          } catch {}
+          } catch (dbErr) {
+            logger.warn('Draft not found in Supabase DB, falling back to defaults', { error: String(dbErr) });
+          }
         }
 
         let isDirectEmail = Boolean(recipient && recipient.includes('@'));
-        let emailSent = false;
+        let targetEmail = isDirectEmail ? recipient : env.SMTP_USER;
+        let targetSubject = isDirectEmail ? subject : `[Dossier Prêt] ${subject}`;
+        let targetBody = isDirectEmail
+          ? body
+          : `Bonjour Seif,\n\nVoici votre dossier prêt pour l'offre "${targetName}" chez ${orgName}.\nLien pour postuler : ${recipient}\n\n--- Lettre de motivation personnalisée ---\n\n${body}`;
 
-        if (isDirectEmail) {
-          // Direct email to supervisor / researcher
-          const sendRes = await emailSenderService.sendApplicationEmail({
-            applicationId: appId,
-            to: recipient,
-            subject,
-            bodyText: body,
-            cvFileName: cvName,
-          });
-          emailSent = sendRes.success;
-          logger.info(`✅ Direct email dispatched to ${recipient} with attachment ${cvName}`);
-        } else {
-          // Posted web offer: send candidate package copy to user's email
-          const sendRes = await emailSenderService.sendApplicationEmail({
-            applicationId: appId,
-            to: env.SMTP_USER,
-            subject: `[Dossier Prêt] ${subject}`,
-            bodyText: `Bonjour Seif,\n\nVoici votre dossier prêt pour l'offre "${targetName}" chez ${orgName}.\nLien pour postuler : ${recipient}\n\n--- Lettre de motivation personnalisée ---\n\n${body}`,
-            cvFileName: cvName,
-          });
-          emailSent = sendRes.success;
-          logger.info(`✅ Application package copy sent to ${env.SMTP_USER}`);
-        }
+        logger.info(`📤 [Telegram Email Dispatch] Sending to: ${targetEmail} with CV: ${cvName}`);
+
+        const sendRes = await emailSenderService.sendApplicationEmail({
+          applicationId: appId,
+          to: targetEmail,
+          subject: targetSubject,
+          bodyText: targetBody,
+          cvFileName: cvName,
+        });
+
+        logger.info(`✅ [Telegram Email Dispatch] Result: success=${sendRes.success}, messageId=${sendRes.messageId || 'none'}`);
 
         try {
           await this.supabase
@@ -161,7 +160,7 @@ export class TelegramApprovalListener {
 
 🎯 <b>Sujet :</b> ${this.escapeHtml(targetName)}
 🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
-📧 <b>Destinataire :</b> <code>${this.escapeHtml(isDirectEmail ? recipient : `${env.SMTP_USER} (Copie dossier & lien)`)}</code>
+📧 <b>Destinataire :</b> <code>${this.escapeHtml(targetEmail)}</code>
 📄 <b>CV joint :</b> <code>${this.escapeHtml(cvName)}</code>
 📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>
 ⏰ <b>Date de traitement :</b> <i>${timestamp}</i>
@@ -175,12 +174,14 @@ export class TelegramApprovalListener {
           parse_mode: 'HTML',
           reply_markup: { inline_keyboard: [] },
         });
+
+        logger.info(`📱 [Telegram Card Updated] Message ${messageId} successfully transformed to APPROVED.`);
       } catch (err) {
-        logger.error('Error handling approval callback', { error: String(err) });
+        logger.error('❌ Error handling approval callback', { error: String(err) });
       }
     } else if (callbackData.startsWith('reject_')) {
       const appId = callbackData.replace('reject_', '');
-      logger.info(`Telegram rejection received for application: ${appId}`);
+      logger.info(`🚫 [Telegram Rejection] Processing application ID: ${appId}`);
 
       try {
         const inMemDraft = draftRegistry.get(appId);
@@ -226,8 +227,10 @@ export class TelegramApprovalListener {
           parse_mode: 'HTML',
           reply_markup: { inline_keyboard: [] },
         });
+
+        logger.info(`📱 [Telegram Card Updated] Message ${messageId} successfully transformed to REJECTED.`);
       } catch (err) {
-        logger.error('Error handling reject callback', { error: String(err) });
+        logger.error('❌ Error handling reject callback', { error: String(err) });
       }
     }
   }
