@@ -20,7 +20,12 @@ async function main() {
     applyUrl: 'https://www.ines-solaire.org/offres/stage-pfe-microgrids-2027.pdf',
     canonicalUrl: 'https://www.ines-solaire.org/offres/stage-pfe-microgrids-2027.pdf',
     contentHash: `hash_pdf_lab_${Date.now()}`,
-    description: 'Modélisation sous Python et MATLAB d’un microréseau hybride couplant génération solaire et BESS. Conception d’algorithmes d’optimisation (programmation dynamique, algorithmes génétiques) pour minimiser le coût d’exploitation.',
+    description: `Modélisation sous Python et MATLAB d’un microréseau hybride couplant génération solaire et BESS. Conception d’algorithmes d’optimisation (programmation dynamique, algorithmes génétiques) pour minimiser le coût d’exploitation.
+
+Encadrant scientifique :
+Dr. Stéphane Averty
+Email : stephane.averty@cea.fr
+Laboratoire LITEN, INES`,
     status: 'NORMALIZED',
     stipendMin: 650,
     stipendMax: 650,
@@ -30,9 +35,9 @@ async function main() {
     skills: ['Microgrids & EMS', 'Python (FastAPI, NumPy, SciPy)', 'Optimisation énergétique (DP, GA, PSO, LP)', 'Stockage par batteries (BESS)'],
     metadata: {
       isPdfOffer: true,
-      supervisorName: 'Dr. Yannick Veschetti',
-      supervisorEmail: 'yannick.veschetti@cea.fr',
-      contactEmail: 'yannick.veschetti@cea.fr',
+      supervisorName: 'Dr. Stéphane Averty',
+      supervisorEmail: 'stephane.averty@cea.fr',
+      contactEmail: 'stephane.averty@cea.fr',
       isDirectEmail: true,
     },
   };
@@ -41,6 +46,7 @@ async function main() {
   const draft = await applicationTailoringService.tailorForPostedOffer(samplePdfOffer);
 
   console.log('   ✓ ID Dossier :         ', draft.id);
+  console.log('   ✓ Superviseur direct : ', draft.targetSupervisor);
   console.log('   ✓ Destinataire direct :', draft.targetContact);
   console.log('   ✓ CV joint :           ', draft.cvAttachmentName);
   console.log('   ✓ Lettre PDF générée : ', draft.coverLetterPdfName);
@@ -52,7 +58,7 @@ async function main() {
   if (sent) {
     console.log('\n✅ SUCCÈS ! La carte interactive a été envoyée sur votre Telegram.');
     console.log('👉 Ouvrez votre Telegram et appuyez sur : [✅ Approuver & Envoyer à l\'Organisme]');
-    console.log('👉 Le bot expédiera la candidature directement au superviseur Dr. Yannick Veschetti !');
+    console.log('👉 Le bot expédiera la candidature directement à l\'encadrant du sujet : Dr. Stéphane Averty (stephane.averty@cea.fr) !');
   } else {
     console.log('❌ Échec de l\'envoi Telegram. Vérifiez vos identifiants bot.');
   }

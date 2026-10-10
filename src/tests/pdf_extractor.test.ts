@@ -64,4 +64,26 @@ describe('PdfInternshipExtractorService', () => {
     const isPfe = pdfInternshipExtractorService.isInternshipPdf(randomText);
     expect(isPfe).toBe(false);
   });
+
+  it('should extract direct potential supervisor from website offer description with inline email', () => {
+    const webDesc = 'Sujet de stage PFE : Commande avancée de convertisseurs. Encadrant : Vincent Debusschere (vincent.debusschere@g2elab.grenoble-inp.fr), laboratoire G2Elab.';
+    const { name, email } = pdfInternshipExtractorService.extractSupervisor(webDesc);
+    expect(name).toBe('Vincent Debusschere');
+    expect(email).toBe('vincent.debusschere@g2elab.grenoble-inp.fr');
+  });
+
+  it('should extract direct potential supervisor from English website offer description', () => {
+    const webDesc = 'Master Thesis / PFE position: Machine learning for PV forecasting. Supervisor: Prof. Bruno Sareni. Email: bruno.sareni@laplace.univ-tlse.fr';
+    const { name, formattedName, email } = pdfInternshipExtractorService.extractSupervisor(webDesc);
+    expect(name).toBe('Bruno Sareni');
+    expect(formattedName).toBe('Prof. Bruno Sareni');
+    expect(email).toBe('bruno.sareni@laplace.univ-tlse.fr');
+  });
+
+  it('should infer direct supervisor email when only generic recruiter mailbox is listed in lab offer', () => {
+    const webDesc = 'Stage de fin d études au CEA LITEN sur les microgrids solaires. Responsable de stage : Stéphane Averty. Pour postuler, contactez recrutement.liten@cea.fr';
+    const { name, email } = pdfInternshipExtractorService.extractSupervisor(webDesc, 'CEA LITEN');
+    expect(name).toBe('Stéphane Averty');
+    expect(email).toBe('stephane.averty@cea.fr');
+  });
 });

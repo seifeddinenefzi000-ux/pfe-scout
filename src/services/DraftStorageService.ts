@@ -8,6 +8,7 @@ export interface ApplicationDraft {
   language: 'FR' | 'EN';
   targetTitle: string;
   targetOrganization: string;
+  targetSupervisor?: string;
   targetContact: string;
   targetCountry: string;
   sourceResumePath: string; // Absolute or relative path to SeifEddine_Nefzi_Resume_FR.pdf or EN.pdf

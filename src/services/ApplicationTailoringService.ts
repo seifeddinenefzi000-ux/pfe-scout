@@ -4,6 +4,7 @@ import { CanonicalInternship } from '../models/DomainModels.js';
 import { getSupabaseClient } from '../database/client.js';
 import { logger } from '../utils/logger.js';
 import { latexCoverLetterService } from './LatexCoverLetterService.js';
+import { pdfInternshipExtractorService } from './PdfInternshipExtractorService.js';
 import { draftStorageService, ApplicationDraft } from './DraftStorageService.js';
 
 export type { ApplicationDraft } from './DraftStorageService.js';
@@ -98,59 +99,53 @@ export class ApplicationTailoringService {
    * Resolve best direct contact email or application URL for a published offer
    */
   resolveOfferContact(offer: CanonicalInternship): string {
-    // 0. If already extracted from a laboratory PDF sheet or metadata
-    if (offer.metadata?.contactEmail && typeof offer.metadata.contactEmail === 'string' && offer.metadata.contactEmail.includes('@')) {
-      return offer.metadata.contactEmail;
-    }
+    // 0. If direct supervisor email or contact email was already set in offer metadata
     if (offer.metadata?.supervisorEmail && typeof offer.metadata.supervisorEmail === 'string' && offer.metadata.supervisorEmail.includes('@')) {
       return offer.metadata.supervisorEmail;
     }
+    if (offer.metadata?.contactEmail && typeof offer.metadata.contactEmail === 'string' && offer.metadata.contactEmail.includes('@')) {
+      return offer.metadata.contactEmail;
+    }
 
-    // 1. Check if applyUrl is a direct mailto: link
+    // 1. Direct potential supervisor extraction from description or title
+    const fullText = `${offer.title || ''}\n${offer.description || ''}`;
+    const sup = pdfInternshipExtractorService.extractSupervisor(fullText, offer.companyName);
+    if (sup.email) {
+      if (!offer.metadata) offer.metadata = {};
+      offer.metadata.supervisorEmail = sup.email;
+      if (sup.formattedName && !offer.metadata.supervisorName) {
+        offer.metadata.supervisorName = sup.formattedName;
+      }
+      return sup.email;
+    }
+
+    // 2. Check if applyUrl is a direct mailto: link
     if (offer.applyUrl && offer.applyUrl.startsWith('mailto:')) {
       const email = offer.applyUrl.replace('mailto:', '').split('?')[0].trim();
       if (email.includes('@')) return email;
     }
 
-    // 2. Scan offer description for an explicit recruiter or supervisor email
+    // 3. Scan offer description for non-generic direct email
     const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
     const descMatches = (offer.description || '').match(emailRegex);
     if (descMatches && descMatches.length > 0) {
-      const candidateEmail = descMatches.find((e) => !e.includes('nefzi') && !e.includes('gmail.com'));
-      if (candidateEmail) return candidateEmail;
+      const nonGeneric = descMatches.filter((e) => {
+        const lower = e.toLowerCase();
+        return (
+          !lower.includes('nefzi') &&
+          !lower.includes('gmail.com') &&
+          !lower.startsWith('recrutement') &&
+          !lower.startsWith('contact') &&
+          !lower.startsWith('rh') &&
+          !lower.startsWith('stage') &&
+          !lower.startsWith('info') &&
+          !lower.startsWith('service')
+        );
+      });
+      if (nonGeneric.length > 0) return nonGeneric[0];
     }
 
-    // 3. Known laboratory research directors & supervisor directory
-    const companyLower = (offer.companyName || '').toLowerCase();
-    const titleLower = (offer.title || '').toLowerCase();
-
-    const knownSupervisorDirectory: Record<string, { name: string; email: string }> = {
-      'ines': { name: 'Dr. Yannick Veschetti', email: 'yannick.veschetti@cea.fr' },
-      'cea liten': { name: 'Dr. Yannick Veschetti', email: 'yannick.veschetti@cea.fr' },
-      'cea': { name: 'Dr. Yannick Veschetti', email: 'yannick.veschetti@cea.fr' },
-      'promes': { name: 'Dr. Stéphane Grieu', email: 'stephane.grieu@promes.cnrs.fr' },
-      'laplace': { name: 'Prof. Bruno Sareni', email: 'bruno.sareni@laplace.univ-tlse.fr' },
-      'g2elab': { name: 'Dr. Vincent Debusschere', email: 'vincent.debusschere@g2elab.grenoble-inp.fr' },
-      'femto': { name: 'Prof. Daniel Hissel', email: 'daniel.hissel@univ-fcomte.fr' },
-      'ipvf': { name: 'Dr. Pere Roca i Cabarrocas', email: 'pere.roca@polytechnique.edu' },
-      'polytechnique': { name: 'Dr. Pere Roca i Cabarrocas', email: 'pere.roca@polytechnique.edu' },
-      'epfl': { name: 'Dr. Elena Savicheva', email: 'elena.savicheva@epfl.ch' },
-      'sorbonne': { name: 'Prof. Mathieu Salanne', email: 'mathieu.salanne@sorbonne-universite.fr' },
-      'polymtl': { name: 'Prof. Jean Mahseredjian', email: 'jean.mahseredjian@polymtl.ca' },
-      'sotulub': { name: 'Direction Technique SOTULUB', email: 'direction.technique@sotulub.com.tn' },
-      'zenith': { name: 'Direction Zenith Solar', email: 'contact@zenith-solar.com' },
-      'ctkcp': { name: 'Ressources Humaines CTKCP', email: 'rh@ctkcp.com' },
-    };
-
-    for (const [key, sup] of Object.entries(knownSupervisorDirectory)) {
-      if (companyLower.includes(key) || titleLower.includes(key)) {
-        if (!offer.metadata) offer.metadata = {};
-        if (!offer.metadata.supervisorName) offer.metadata.supervisorName = sup.name;
-        return sup.email;
-      }
-    }
-
-    // 4. Fallback to applyUrl / canonicalUrl
+    // 4. Fallback to applyUrl / canonicalUrl (e.g. portal)
     return offer.applyUrl || offer.canonicalUrl || '';
   }
 
@@ -265,7 +260,26 @@ export class ApplicationTailoringService {
 
     const draftId = offer.id || `offer_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
-    const supervisorName = (offer.metadata as any)?.supervisorName as string | undefined;
+    // 1. Resolve direct potential supervisor from metadata or offer description/text
+    let supervisorName = (offer.metadata as any)?.supervisorName as string | undefined;
+    let supervisorEmail = (offer.metadata as any)?.supervisorEmail as string | undefined;
+
+    if (!supervisorName || !supervisorEmail) {
+      const fullText = `${cleanTitle}\n${offer.description || ''}`;
+      const extractedSup = pdfInternshipExtractorService.extractSupervisor(fullText, cleanCompany);
+      if (!supervisorName && extractedSup.formattedName) {
+        supervisorName = extractedSup.formattedName;
+        if (!offer.metadata) offer.metadata = {};
+        offer.metadata.supervisorName = supervisorName;
+      }
+      if (!supervisorEmail && extractedSup.email) {
+        supervisorEmail = extractedSup.email;
+        if (!offer.metadata) offer.metadata = {};
+        offer.metadata.supervisorEmail = supervisorEmail;
+        offer.metadata.contactEmail = supervisorEmail;
+        offer.metadata.isDirectEmail = true;
+      }
+    }
 
     // Generate customized LaTeX Cover Letter PDF
     const coverLetterResult = await latexCoverLetterService.generateCoverLetter({
@@ -329,13 +343,16 @@ seifeddinenefzi000@gmail.com
 linkedin.com/in/nefzi-seifeddine`;
     }
 
+    const resolvedContact = supervisorEmail || this.resolveOfferContact(offer);
+
     const draft: ApplicationDraft = {
       id: draftId,
       type: 'POSTED_OFFER',
       language,
       targetTitle: cleanTitle,
       targetOrganization: cleanCompany,
-      targetContact: this.resolveOfferContact(offer),
+      targetSupervisor: supervisorName,
+      targetContact: resolvedContact,
       targetCountry: offer.country || 'France',
       sourceResumePath: resumeSourcePath,
       cvAttachmentName,
@@ -486,6 +503,7 @@ linkedin.com/in/nefzi-seifeddine`;
       language,
       targetTitle: `PFE Recherche : ${cleanTopic}`,
       targetOrganization: cleanInst,
+      targetSupervisor: supervisor.name,
       targetContact: supervisor.email,
       targetCountry: supervisor.country,
       sourceResumePath: resumeSourcePath,

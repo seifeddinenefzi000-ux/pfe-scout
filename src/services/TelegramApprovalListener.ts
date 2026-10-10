@@ -187,11 +187,15 @@ export class TelegramApprovalListener {
             ? '✅ <b>CANDIDATURE EXPÉDIÉE DIRECTEMENT À L\'ORGANISME !</b>'
             : '📥 <b>DOSSIER COMPLET TRANSMIS PAR EMAIL POUR POSTULATION SUR PORTAIL !</b>';
 
+          const supervisorInfo = draft?.targetSupervisor
+            ? `\n👨‍🏫 <b>Superviseur direct :</b> ${this.escapeHtml(draft.targetSupervisor)}`
+            : '';
+
           const updatedCard = `
 ${statusTitle}
 
 🎯 <b>Sujet :</b> ${this.escapeHtml(targetTitle)}
-🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
+🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}${supervisorInfo}
 📧 <b>Destinataire :</b> <code>${this.escapeHtml(targetEmail)}</code>
 📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>
 📨 <b>Message ID :</b> <code>${this.escapeHtml(sendRes.messageId || 'dispatch-ok')}</code>

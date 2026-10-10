@@ -78,9 +78,12 @@ Consultez les fiches détaillées ci-dessous et cliquez sur <b>Approuver</b> pou
 
     const letterName = draft.coverLetterPdfName || (draft.language === 'FR' ? 'Lettre_Motivation_Seif_Eddine_Nefzi.pdf' : 'Cover_Letter_Seif_Eddine_Nefzi.pdf');
     const isDirectEmail = Boolean(draft.targetContact && draft.targetContact.includes('@'));
+    const supervisorLine = draft.targetSupervisor
+      ? `👨‍🏫 <b>Encadrant / Superviseur direct :</b> ${this.escapeHtml(draft.targetSupervisor)}\n`
+      : '';
     const contactLine = isDirectEmail
-      ? `👤 <b>Destinataire Direct :</b> <code>${this.escapeHtml(draft.targetContact)}</code>\n🚀 <b>Mode :</b> 📨 Candidature directe par Email`
-      : `🌐 <b>Portail Web :</b> <a href="${this.escapeHtml(draft.targetContact)}">${this.escapeHtml(draft.targetContact)}</a>\nℹ️ <b>Mode :</b> 🌐 Candidature via formulaire / portail de l'organisme`;
+      ? `${supervisorLine}👤 <b>Destinataire Direct :</b> <code>${this.escapeHtml(draft.targetContact)}</code>\n🚀 <b>Mode :</b> 📨 Candidature directe par Email`
+      : `${supervisorLine}🌐 <b>Portail Web :</b> <a href="${this.escapeHtml(draft.targetContact)}">${this.escapeHtml(draft.targetContact)}</a>\nℹ️ <b>Mode :</b> 🌐 Candidature via formulaire / portail de l'organisme`;
 
     const buttonRow: any[] = [];
     if (isDirectEmail) {

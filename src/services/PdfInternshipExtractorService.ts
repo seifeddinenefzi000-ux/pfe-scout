@@ -113,8 +113,8 @@ export class PdfInternshipExtractorService {
   /**
    * Extract supervisor (encadrant/tuteur) and their direct contact email
    */
-  extractSupervisor(text: string): { name: string | null; email: string | null } {
-    // 1. Find all emails in the PDF
+  extractSupervisor(text: string, defaultOrg?: string): { name: string | null; formattedName?: string | null; email: string | null } {
+    // 1. Find all emails in the text
     const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
     const allEmails = Array.from(new Set(text.match(emailRegex) || [])).filter((email) => {
       const e = email.toLowerCase();
@@ -129,22 +129,50 @@ export class PdfInternshipExtractorService {
     });
 
     let supervisorName: string | null = null;
+    let formattedSupervisorName: string | null = null;
+
     const supervisorPatterns = [
-      /(?:encadrant(?:e)?s?|responsable(?:s)?|tuteur(?:ice)?s?|contact(?:s)?)(?:\s*(?:scientifique|de stage|technique|pédagogique|thèse))?\s*[:\-]?\s*(?:\r?\n\s*)?([^\r\n,]+)/i,
-      /(?:sous la direction de|encadrement par)\s*[:\-]?\s*(?:\r?\n\s*)?([^\r\n,]+)/i,
+      /(?:encadrant(?:e)?s?|responsable(?:s)?|tuteur(?:ice)?s?|contact(?:s)?|maître de stage|chef de projet)(?:\s*(?:scientifique|de stage|technique|pédagogique|thèse|recherche))?\s*[:\-]?\s*(?:\r?\n\s*)?([^\r\n,;()<]+)/i,
+      /(?:sous la direction de|encadrement par|sous la responsabilité de|dirigé par)\s*[:\-]?\s*(?:\r?\n\s*)?([^\r\n,;()<]+)/i,
+      /(?:adresser|envoyer|transmettre)\s+(?:votre\s+)?(?:candidature|cv|dossier)\s+à\s*[:\-]?\s*(?:\r?\n\s*)?([^\r\n,;()<]+)/i,
+      /(?:pour postuler,?\s*(?:veuillez\s*)?(?:contacter|adresser|envoyer))\s+(?:à\s+)?([^\r\n,;()<]+)/i,
+      /(?:supervisor(?:s)?|advisor(?:s)?|adviser|principal investigator|pi|mentor|contact person)(?:\s*(?:lead|scientific))?\s*[:\-]?\s*(?:\r?\n\s*)?([^\r\n,;()<]+)/i,
+      /(?:supervision of|supervised by|under the guidance of)\s*[:\-]?\s*(?:\r?\n\s*)?([^\r\n,;()<]+)/i,
+      /(?:send|submit)\s+(?:your\s+)?(?:application|cv|resume)\s+to\s*[:\-]?\s*(?:\r?\n\s*)?([^\r\n,;()<]+)/i,
+      /(?:please contact)\s+([^\r\n,;()<]+)/i,
     ];
+
+    const invalidKeywords = ['laboratoire', 'équipe', 'mission', 'candidature', 'stage', 'offre', 'cliquez', 'http', 'service', 'direction générale'];
 
     for (const pattern of supervisorPatterns) {
       const match = text.match(pattern);
       if (match && match[1]) {
         const candidate = match[1].trim();
-        // Remove honorifics
-        const cleanName = candidate
-          .replace(/^(Dr\.?|Prof\.?|M\.?|Mme\.?)\s+/i, '')
-          .replace(/\s+/g, ' ')
+        const lowerCandidate = candidate.toLowerCase();
+        if (invalidKeywords.some((kw) => lowerCandidate.includes(kw))) {
+          continue;
+        }
+
+        const isDr = candidate.match(/^(Dr\.?|Docteur)\s+/i);
+        const isProf = candidate.match(/^(Prof\.?|Professeur)\s+/i);
+
+        let cleanName = candidate
+          .replace(/^(Dr\.?|Prof\.?|M\.?|Mme\.?|Mr\.?|Mrs\.?|Ms\.?|Docteur|Professeur)\s+/i, '')
           .trim();
-        if (cleanName.length >= 3 && cleanName.length <= 40 && !cleanName.toLowerCase().includes('laboratoire')) {
+
+        // Stop at sentence-ending period, newline, or punctuation
+        cleanName = cleanName.split(/[\r\n\.,;()<]/)[0].trim();
+        cleanName = cleanName.replace(/\s+/g, ' ');
+
+        if (cleanName.length >= 3 && cleanName.length <= 45 && !cleanName.includes('@')) {
           supervisorName = cleanName;
+          if (isDr) {
+            formattedSupervisorName = `Dr. ${cleanName}`;
+          } else if (isProf) {
+            formattedSupervisorName = `Prof. ${cleanName}`;
+          } else {
+            formattedSupervisorName = cleanName;
+          }
           break;
         }
       }
@@ -153,21 +181,36 @@ export class PdfInternshipExtractorService {
     // 2. Select best supervisor email
     let supervisorEmail: string | null = null;
 
-    if (supervisorName && allEmails.length > 0) {
-      const parts = supervisorName
+    // A. Check if an email was explicitly placed on the same line or in parentheses near the supervisor keyword
+    const inlineEmailRegex = /(?:encadrant|responsable|tuteur|contact|direction|adresser|envoyer|supervisor|advisor|mentor)[^\n\r]*?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i;
+    const inlineMatch = text.match(inlineEmailRegex);
+    if (inlineMatch && inlineMatch[1]) {
+      const e = inlineMatch[1].toLowerCase();
+      if (!e.startsWith('recrutement') && !e.startsWith('contact@') && !e.startsWith('stages') && !e.startsWith('rh@')) {
+        supervisorEmail = inlineMatch[1];
+      }
+    }
+
+    // B. Match emails with supervisor's first or last name (accent-tolerant)
+    if (!supervisorEmail && supervisorName && allEmails.length > 0) {
+      const normName = supervisorName
         .toLowerCase()
-        .split(/\s+/)
-        .filter((p) => p.length > 2);
-      // Prefer an email matching supervisor's name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      const parts = normName.split(/\s+/).filter((p) => p.length >= 3);
+
       const matchedEmail = allEmails.find((email) => {
-        const e = email.toLowerCase();
-        return parts.some((part) => e.includes(part));
+        const normEmail = email
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+        return parts.some((part) => normEmail.includes(part));
       });
       if (matchedEmail) supervisorEmail = matchedEmail;
     }
 
+    // C. Non-generic nominative email fallback
     if (!supervisorEmail && allEmails.length > 0) {
-      // Prioritize nominative emails (e.g. prenom.nom@lab.fr) and reject generic mailboxes
       const nonGenericEmails = allEmails.filter((e) => {
         const localPart = e.split('@')[0].toLowerCase();
         return (
@@ -182,25 +225,64 @@ export class PdfInternshipExtractorService {
         );
       });
 
-      const candidateList = nonGenericEmails.length > 0 ? nonGenericEmails : allEmails;
-      const academicEmail = candidateList.find((e) => {
-        const lower = e.toLowerCase();
-        return (
-          lower.includes('.fr') ||
-          lower.includes('.ch') ||
-          lower.includes('.ac.uk') ||
-          lower.includes('.edu') ||
-          lower.includes('cea.fr') ||
-          lower.includes('cnrs.fr') ||
-          lower.includes('univ') ||
-          lower.includes('mines') ||
-          lower.includes('epfl')
-        );
-      });
-      supervisorEmail = academicEmail || candidateList[0];
+      if (nonGenericEmails.length > 0) {
+        const academicEmail = nonGenericEmails.find((e) => {
+          const lower = e.toLowerCase();
+          return (
+            lower.includes('.fr') ||
+            lower.includes('.ch') ||
+            lower.includes('.ac.uk') ||
+            lower.includes('.edu') ||
+            lower.includes('cea.fr') ||
+            lower.includes('cnrs.fr') ||
+            lower.includes('univ') ||
+            lower.includes('mines') ||
+            lower.includes('epfl')
+          );
+        });
+        if (academicEmail) supervisorEmail = academicEmail;
+      }
     }
 
-    return { name: supervisorName, email: supervisorEmail };
+    // D. Inferred direct email from supervisor name and organization domain if only generic email was given
+    if (!supervisorEmail && supervisorName) {
+      const normName = supervisorName
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      const parts = normName.split(/\s+/).filter((p) => p.length >= 2);
+      if (parts.length >= 2) {
+        const firstName = parts[0];
+        const lastName = parts[parts.length - 1];
+
+        // Infer domain from text or defaultOrg
+        let domain: string | null = null;
+        const textLower = `${text} ${defaultOrg || ''}`.toLowerCase();
+        if (textLower.includes('cea') || textLower.includes('liten') || textLower.includes('ines')) {
+          domain = 'cea.fr';
+        } else if (textLower.includes('promes')) {
+          domain = 'promes.cnrs.fr';
+        } else if (textLower.includes('cnrs')) {
+          domain = 'cnrs.fr';
+        } else if (textLower.includes('epfl')) {
+          domain = 'epfl.ch';
+        } else if (textLower.includes('g2elab') || textLower.includes('grenoble-inp')) {
+          domain = 'g2elab.grenoble-inp.fr';
+        } else if (textLower.includes('laplace')) {
+          domain = 'laplace.univ-tlse.fr';
+        }
+
+        if (domain) {
+          supervisorEmail = `${firstName}.${lastName}@${domain}`;
+        }
+      }
+    }
+
+    return {
+      name: supervisorName,
+      formattedName: formattedSupervisorName || supervisorName,
+      email: supervisorEmail,
+    };
   }
 
   /**
