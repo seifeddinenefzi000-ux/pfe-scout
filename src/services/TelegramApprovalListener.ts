@@ -3,6 +3,7 @@ import { env } from '../config/env.js';
 import { logger } from '../utils/logger.js';
 import { emailSenderService } from './EmailSenderService.js';
 import { getSupabaseClient } from '../database/client.js';
+import { draftRegistry } from './ApplicationTailoringService.js';
 
 export class TelegramApprovalListener {
   private offset = 0;
@@ -94,32 +95,57 @@ export class TelegramApprovalListener {
       logger.info(`Telegram approval received for application: ${appId}`);
 
       try {
-        const { data: application } = await this.supabase
-          .from('applications')
-          .select('*')
-          .eq('id', appId)
-          .single();
+        const inMemDraft = draftRegistry.get(appId);
+        let targetName = inMemDraft?.targetTitle || appId;
+        let orgName = inMemDraft?.targetOrganization || 'Établissement';
+        let recipient = inMemDraft?.targetContact || '';
+        let cvName = inMemDraft ? inMemDraft.cvFileName : 'CV_Seif_Energies_Renouvelables.pdf';
+        let subject = inMemDraft?.emailSubject || 'Candidature Stage PFE';
+        let body = inMemDraft?.coverLetterOrEmailBody || '';
 
-        let recipient = application?.contact_info || 'Destinataire';
-        let cvName = application ? `${application.cv_track_used}.pdf` : 'CV_Seif_Energies_Renouvelables.pdf';
-        let subject = application?.email_subject || 'Candidature Stage PFE';
+        if (!inMemDraft) {
+          try {
+            const { data: application } = await this.supabase
+              .from('applications')
+              .select('*')
+              .eq('id', appId)
+              .single();
 
-        if (application && application.contact_info?.includes('@')) {
+            if (application) {
+              targetName = application.target_name || targetName;
+              orgName = application.organization || orgName;
+              recipient = application.contact_info || recipient;
+              cvName = application.cv_track_used ? `${application.cv_track_used}.pdf` : cvName;
+              subject = application.email_subject || subject;
+              body = application.letter_content || body;
+            }
+          } catch {}
+        }
+
+        if (recipient && recipient.includes('@')) {
           await emailSenderService.sendApplicationEmail({
-            applicationId: application.id,
-            to: application.contact_info,
-            subject: application.email_subject,
-            bodyText: application.letter_content,
+            applicationId: appId,
+            to: recipient,
+            subject,
+            bodyText: body,
             cvFileName: cvName,
           });
+          logger.info(`✅ Email dispatched to ${recipient} with attachment ${cvName}`);
         }
+
+        try {
+          await this.supabase
+            .from('applications')
+            .update({ status: 'APPROVED', updated_at: new Date().toISOString() })
+            .eq('id', appId);
+        } catch {}
 
         const updatedCard = `
 ✅ <b>CANDIDATURE ENVOYÉE AVEC SUCCÈS !</b>
 
-🎯 <b>Sujet :</b> ${this.escapeHtml(application?.target_name || appId)}
-🏛️ <b>Organisme :</b> ${this.escapeHtml(application?.organization || 'Établissement')}
-📧 <b>Destinataire :</b> <code>${this.escapeHtml(recipient)}</code>
+🎯 <b>Sujet :</b> ${this.escapeHtml(targetName)}
+🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
+📧 <b>Destinataire :</b> <code>${this.escapeHtml(recipient || 'Candidature enregistrée')}</code>
 📄 <b>CV joint :</b> <code>${this.escapeHtml(cvName)}</code>
 📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>
 ⏰ <b>Date d'envoi :</b> <i>${timestamp}</i>
@@ -141,22 +167,37 @@ export class TelegramApprovalListener {
       logger.info(`Telegram rejection received for application: ${appId}`);
 
       try {
-        await this.supabase
-          .from('applications')
-          .update({ status: 'REJECTED' })
-          .eq('id', appId);
+        const inMemDraft = draftRegistry.get(appId);
+        let targetName = inMemDraft?.targetTitle || appId;
+        let orgName = inMemDraft?.targetOrganization || 'Établissement';
 
-        const { data: application } = await this.supabase
-          .from('applications')
-          .select('target_name, organization')
-          .eq('id', appId)
-          .single();
+        if (!inMemDraft) {
+          try {
+            const { data: application } = await this.supabase
+              .from('applications')
+              .select('target_name, organization')
+              .eq('id', appId)
+              .single();
+
+            if (application) {
+              targetName = application.target_name || targetName;
+              orgName = application.organization || orgName;
+            }
+          } catch {}
+        }
+
+        try {
+          await this.supabase
+            .from('applications')
+            .update({ status: 'REJECTED', updated_at: new Date().toISOString() })
+            .eq('id', appId);
+        } catch {}
 
         const updatedCard = `
 ❌ <b>CANDIDATURE REJETÉE ET ARCHIVÉE</b>
 
-🎯 <b>Sujet :</b> ${this.escapeHtml(application?.target_name || appId)}
-🏛️ <b>Organisme :</b> ${this.escapeHtml(application?.organization || 'Établissement')}
+🎯 <b>Sujet :</b> ${this.escapeHtml(targetName)}
+🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
 📁 <i>Cette opportunité a été classée dans votre dossier fermé et ne sera plus proposée.</i>
 ⏰ <b>Date :</b> <i>${timestamp}</i>
 `.trim();

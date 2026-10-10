@@ -102,6 +102,30 @@ export class EligibilityFilterStage {
       'permanent full-time',
     ];
 
+    const nonInternshipSignals = [
+      'webinaire',
+      'webinar',
+      'soutenance',
+      'soutiendra',
+      'hdr',
+      'habilitation',
+      'conférence',
+      'conference',
+      'workshop',
+      'journée d’étude',
+      'journee d\'etude',
+      'actualité',
+      'actualite',
+      'lune',
+      'thèse cifre',
+      'these cifre',
+      'offre de thèse',
+      'offre de these',
+      'doctorat',
+      'post-doc',
+      'postdoc',
+    ];
+
     for (const item of items) {
       const titleLower = item.title.toLowerCase();
       const descLower = (item.description || '').toLowerCase();
@@ -121,7 +145,18 @@ export class EligibilityFilterStage {
         continue;
       }
 
-      // 2. Reject permanent full-time senior jobs (only internships/theses allowed)
+      // 2. Reject non-internships (Webinars, HDR defenses, PhD theses, conferences)
+      const isNonInternship = nonInternshipSignals.some((sig) => {
+        return titleLower.includes(sig) && !titleLower.includes('stage') && !titleLower.includes('intern');
+      });
+
+      if (isNonInternship) {
+        logger.info(`Rejected item "${item.title}" - detected non-internship (webinar, HDR, thesis or news).`);
+        rejectedCount++;
+        continue;
+      }
+
+      // 3. Reject permanent full-time senior jobs (only internships/theses allowed)
       const isSenior = seniorOrCdiKeywords.some((s) => titleLower.includes(s) && !titleLower.includes('intern') && !titleLower.includes('stage'));
       if (isSenior) {
         logger.info(`Rejected item "${item.title}" - full time senior role.`);
@@ -129,7 +164,25 @@ export class EligibilityFilterStage {
         continue;
       }
 
-      // 3. Strict Date & Deadline Verification (Reject expired offers)
+      // 4. Require explicit stage / internship signals if title does not clearly indicate a role
+      const hasStageSignal = titleLower.includes('stage') ||
+        titleLower.includes('intern') ||
+        titleLower.includes('pfe') ||
+        titleLower.includes('master 2') ||
+        titleLower.includes('master2') ||
+        titleLower.includes('fin d\'études') ||
+        titleLower.includes('ingénieur') ||
+        titleLower.includes('ingenieur') ||
+        descLower.includes('stage') ||
+        descLower.includes('internship');
+
+      if (!hasStageSignal) {
+        logger.info(`Rejected item "${item.title}" - does not contain stage/internship indicator.`);
+        rejectedCount++;
+        continue;
+      }
+
+      // 5. Strict Date & Deadline Verification (Reject expired offers)
       if (item.deadline) {
         const deadlineDate = new Date(item.deadline);
         if (!isNaN(deadlineDate.getTime()) && deadlineDate < now) {
