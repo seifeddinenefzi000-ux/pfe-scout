@@ -236,8 +236,13 @@ export class LatexCoverLetterService {
       );
     }
 
-    // Crucial rule: Set \highlightfalse for final clean black text
-    templateContent = templateContent.replace('\\highlighttrue', '\\highlightfalse');
+    // Enforce 100% black text and eliminate all blue draft styling
+    templateContent = templateContent
+      .replace(/\\highlighttrue/g, '\\highlightfalse')
+      .replace(
+        '\\newcommand{\\ph}[1]{\\ifhighlight\\textcolor{blue}{#1}\\else #1\\fi}',
+        '\\newcommand{\\ph}[1]{#1}'
+      );
 
     const combinedTopic = `${positionTitle} ${organization} ${topicText || ''}`;
     const hookInfo = this.chooseHook(combinedTopic, language);
@@ -252,7 +257,6 @@ export class LatexCoverLetterService {
       opportunityType || (language === 'FR' ? "stage de fin d'études de 4 à 6 mois" : 'graduation internship (4 to 6 months)')
     );
 
-    // Build the CUSTOMIZE block replacement
     const recipientBlock = `${safeRecipientTitle}\\\\\n  ${safeOrg}\\\\\n  ${safeCityCountry}`;
     const salutation = language === 'FR' ? 'Madame, Monsieur,' : 'Dear Sir or Madam,';
     const goal =
@@ -266,23 +270,113 @@ export class LatexCoverLetterService {
       language === 'FR' ? `rejoindre ${safeOrg} pour ce stage` : `join ${safeOrg} for this internship`;
     const domain = language === 'FR' ? 'ces systèmes' : 'these systems';
 
-    // Inject customization macros
-    templateContent = templateContent
-      .replace(/\\newcommand\{\\recipientblock\}\{[\s\S]*?\}\}/, `\\newcommand{\\recipientblock}{\n  ${recipientBlock}}`)
-      .replace(/\\newcommand\{\\org\}\{.*?\}/, `\\newcommand{\\org}{${safeOrg}}`)
-      .replace(/\\newcommand\{\\position\}\{.*?\}/, `\\newcommand{\\position}{${safePosition}}`)
-      .replace(/\\newcommand\{\\opportunity\}\{.*?\}/, `\\newcommand{\\opportunity}{${safeOpportunity}}`)
-      .replace(/\\newcommand\{\\salutation\}\{.*?\}/, `\\newcommand{\\salutation}{${salutation}}`)
-      .replace(/\\newcommand\{\\hook\}\{.*?\}/, `\\newcommand{\\hook}{${hookInfo.hookMacro}}`)
-      .replace(/\\newcommand\{\\whyorg\}\{.*?\}/, `\\newcommand{\\whyorg}{${whyOrgSentence}}`)
-      .replace(/\\newcommand\{\\experiences\}\{.*?\}/, `\\newcommand{\\experiences}{${expInfo.experiences}}`)
-      .replace(/\\newcommand\{\\prototypes\}\{.*?\}/, `\\newcommand{\\prototypes}{${expInfo.prototypes}}`)
-      .replace(/\\newcommand\{\\goal\}\{.*?\}/, `\\newcommand{\\goal}{${goal}}`)
-      .replace(/\\newcommand\{\\skills\}\{.*?\}/, `\\newcommand{\\skills}{${expInfo.skills}}`)
-      .replace(/\\newcommand\{\\team\}\{.*?\}/, `\\newcommand{\\team}{${team}}`)
-      .replace(/\\newcommand\{\\techclause\}\{.*?\}/, `\\newcommand{\\techclause}{${techclause}}`)
-      .replace(/\\newcommand\{\\joinaction\}\{.*?\}/, `\\newcommand{\\joinaction}{${joinaction}}`)
-      .replace(/\\newcommand\{\\domain\}\{.*?\}/, `\\newcommand{\\domain}{${domain}}`);
+    let customBlock = '';
+
+    if (language === 'FR') {
+      customBlock = `%% =====================================================================
+%%  A PERSONNALISER
+%% =====================================================================
+
+% --- Vos informations ---
+\\newcommand{\\myname}{Seif Eddine Nefzi}
+\\newcommand{\\myaddress}{Menzel Bourguiba, Tunisie}
+\\newcommand{\\myphone}{(+216) 20 016 808}
+\\newcommand{\\myemail}{nefzi.seifeddine@enim.u-monastir.tn}
+
+\\newcommand{\\companylogo}{}
+\\newcommand{\\letterdate}{}
+
+% --- Destinataire ---
+\\newcommand{\\recipientblock}{%
+  ${recipientBlock}}
+
+% --- L'offre ---
+\\newcommand{\\org}{${safeOrg}}
+\\newcommand{\\position}{${safePosition}}
+\\newcommand{\\opportunity}{${safeOpportunity}}
+\\newcommand{\\salutation}{${salutation}}
+
+% --- Paragraphe 1 : ACCROCHE ---
+\\newcommand{\\hookENIM}{Depuis que j'ai rejoint \\enim{}, une question ne m'a jamais quitté : comment rendre nos systèmes énergétiques réellement plus efficaces, et pas seulement sur le papier.}
+\\newcommand{\\hookEMS}{Depuis que je construis un \\ems{} pour un microréseau hybride, une question ne m'a jamais quitté : comment faire travailler ensemble, de façon plus intelligente, l'énergie que nous produisons, stockons et consommons, et pas seulement sur le papier.}
+\\newcommand{\\hookActuator}{Depuis que j'ai conçu un suiveur solaire à actionneur unique, qui suit le soleil avec un seul moteur au lieu de deux, une question ne m'a jamais quitté : comment tirer plus d'énergie d'un matériel plus simple, et pas seulement sur le papier.}
+\\newcommand{\\hookTracker}{Depuis que j'ai conçu mon premier suiveur solaire à \\enim{}, une question ne m'a jamais quitté : comment rendre nos systèmes énergétiques réellement plus efficaces, et pas seulement sur le papier.}
+\\newcommand{\\hookIndustry}{Depuis que j'ai étudié la récupération de chaleur fatale chez \\sotulub{}, une question ne m'a jamais quitté : combien d'énergie gaspillons-nous encore dans l'industrie, et comment la récupérer ?}
+
+\\newcommand{\\hook}{${hookInfo.hookMacro}}
+
+% --- Paragraphe 1 : pourquoi CETTE organisation ---
+\\newcommand{\\whyorg}{${whyOrgSentence}}
+
+% --- Paragraphe 2 : preuves ---
+\\newcommand{\\experiences}{${expInfo.experiences}}
+\\newcommand{\\prototypes}{${expInfo.prototypes}}
+
+% --- Paragraphe 3 : ce que vous cherchez et ce que vous apportez ---
+\\newcommand{\\goal}{${goal}}
+\\newcommand{\\skills}{${expInfo.skills}}
+\\newcommand{\\team}{${team}}
+\\newcommand{\\techclause}{${techclause}}
+
+% --- Paragraphe 4 : conclusion sincere ---
+\\newcommand{\\joinaction}{${joinaction}}
+\\newcommand{\\domain}{${domain}}`;
+
+      const blockRegex = /%% =+[\r\n]+%%  A PERSONNALISER[\r\n]+%% =+[\s\S]*?(?=%% =+[\r\n]+%%  LETTRE)/;
+      templateContent = templateContent.replace(blockRegex, customBlock + '\n\n');
+    } else {
+      customBlock = `%% =====================================================================
+%%  CUSTOMIZE HERE
+%% =====================================================================
+
+% --- Your details ---
+\\newcommand{\\myname}{Seif Eddine Nefzi}
+\\newcommand{\\myaddress}{Menzel Bourguiba, Tunisia}
+\\newcommand{\\myphone}{(+216) 20 016 808}
+\\newcommand{\\myemail}{nefzi.seifeddine@enim.u-monastir.tn}
+
+\\newcommand{\\companylogo}{}
+\\newcommand{\\letterdate}{}
+
+% --- Recipient ---
+\\newcommand{\\recipientblock}{%
+  ${recipientBlock}}
+
+% --- The offer ---
+\\newcommand{\\org}{${safeOrg}}
+\\newcommand{\\position}{${safePosition}}
+\\newcommand{\\opportunity}{${safeOpportunity}}
+\\newcommand{\\salutation}{${salutation}}
+
+% --- Paragraph 1: OPENING HOOK ---
+\\newcommand{\\hookENIM}{Ever since I joined \\enim{}, one question has never left me: how to make our energy systems genuinely more efficient, not just on paper.}
+\\newcommand{\\hookEMS}{Ever since I started building an \\ems{} for a hybrid microgrid, one question has never left me: how to make the energy we produce, store and consume work together more intelligently, not just on paper.}
+\\newcommand{\\hookActuator}{Ever since I designed a single-actuator solar tracker, which follows the sun with one motor instead of two, one question has never left me: how to get more energy from simpler hardware, not just on paper.}
+\\newcommand{\\hookTracker}{Ever since I designed my first solar tracker at \\enim{}, one question has never left me: how to make our energy systems genuinely more efficient, not just on paper.}
+\\newcommand{\\hookIndustry}{Ever since I studied waste heat recovery at \\sotulub{}, one question has never left me: how much energy do we still waste in industry, and how can we recover it?}
+
+\\newcommand{\\hook}{${hookInfo.hookMacro}}
+
+% --- Paragraph 1: why THIS organisation ---
+\\newcommand{\\whyorg}{${whyOrgSentence}}
+
+% --- Paragraph 2: proof ---
+\\newcommand{\\experiences}{${expInfo.experiences}}
+\\newcommand{\\prototypes}{${expInfo.prototypes}}
+
+% --- Paragraph 3: what you seek and what you bring ---
+\\newcommand{\\goal}{${goal}}
+\\newcommand{\\skills}{${expInfo.skills}}
+\\newcommand{\\team}{${team}}
+\\newcommand{\\techclause}{${techclause}}
+
+% --- Paragraph 4: honest close ---
+\\newcommand{\\joinaction}{${joinaction}}
+\\newcommand{\\domain}{${domain}}`;
+
+      const blockRegex = /%% =+[\r\n]+%%  CUSTOMIZE HERE[\r\n]+%% =+[\s\S]*?(?=%% =+[\r\n]+%%  LETTER)/;
+      templateContent = templateContent.replace(blockRegex, customBlock + '\n\n');
+    }
 
     const texFileName = language === 'FR' ? 'Lettre_Motivation_Seif_Eddine_Nefzi.tex' : 'Cover_Letter_Seif_Eddine_Nefzi.tex';
     const pdfFileName = language === 'FR' ? 'Lettre_Motivation_Seif_Eddine_Nefzi.pdf' : 'Cover_Letter_Seif_Eddine_Nefzi.pdf';
