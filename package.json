@@ -18,6 +18,7 @@
     "email:test": "tsx src/scripts/testEmailDispatch.ts",
     "pipeline:run": "tsx src/scripts/runPipeline.ts",
     "bot:listen": "tsx src/scripts/runApprovalDaemon.ts",
+    "test:pdf": "tsx src/scripts/testPdfPipeline.ts",
     "scout": "tsx src/scripts/runScoutJob.ts",
     "lint": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\""
