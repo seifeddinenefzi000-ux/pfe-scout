@@ -8,6 +8,7 @@ coverage/
 .ds_store
 .trigger/
 *.pdf
+!data/resumes/*.pdf
 resume.pdf
 data/generated_letters/
 data/drafts/
