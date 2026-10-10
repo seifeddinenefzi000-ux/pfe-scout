@@ -151,7 +151,7 @@ export class TelegramApprovalListener {
         const sendRes = await emailSenderService.sendApplicationEmail({
           applicationId: appId,
           to: targetEmail,
-          bcc: isDirectEmail ? env.SMTP_USER : undefined,
+          bcc: undefined,
           subject: targetSubject,
           bodyText: targetBody,
           sourceCvPath: draft?.sourceResumePath,
@@ -187,17 +187,13 @@ export class TelegramApprovalListener {
             ? '✅ <b>CANDIDATURE EXPÉDIÉE DIRECTEMENT À L\'ORGANISME !</b>'
             : '📥 <b>DOSSIER COMPLET TRANSMIS PAR EMAIL POUR POSTULATION SUR PORTAIL !</b>';
 
-          const noteBcc = isDirectEmail
-            ? `\n📋 <b>Copie reçue (BCC) :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>`
-            : '';
-
           const updatedCard = `
 ${statusTitle}
 
 🎯 <b>Sujet :</b> ${this.escapeHtml(targetTitle)}
 🏛️ <b>Organisme :</b> ${this.escapeHtml(orgName)}
 📧 <b>Destinataire :</b> <code>${this.escapeHtml(targetEmail)}</code>
-📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>${noteBcc}
+📤 <b>Expéditeur :</b> <code>${this.escapeHtml(env.SMTP_USER)}</code>
 📨 <b>Message ID :</b> <code>${this.escapeHtml(sendRes.messageId || 'dispatch-ok')}</code>
 
 <b>Documents joints :</b>

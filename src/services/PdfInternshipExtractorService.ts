@@ -167,8 +167,23 @@ export class PdfInternshipExtractorService {
     }
 
     if (!supervisorEmail && allEmails.length > 0) {
-      // Prioritize academic / research institute domain emails
-      const academicEmail = allEmails.find((e) => {
+      // Prioritize nominative emails (e.g. prenom.nom@lab.fr) and reject generic mailboxes
+      const nonGenericEmails = allEmails.filter((e) => {
+        const localPart = e.split('@')[0].toLowerCase();
+        return (
+          !localPart.startsWith('recrutement') &&
+          !localPart.startsWith('stage') &&
+          !localPart.startsWith('contact') &&
+          !localPart.startsWith('rh') &&
+          !localPart.startsWith('info') &&
+          !localPart.startsWith('carrieres') &&
+          !localPart.startsWith('service') &&
+          !localPart.startsWith('direction')
+        );
+      });
+
+      const candidateList = nonGenericEmails.length > 0 ? nonGenericEmails : allEmails;
+      const academicEmail = candidateList.find((e) => {
         const lower = e.toLowerCase();
         return (
           lower.includes('.fr') ||
@@ -182,7 +197,7 @@ export class PdfInternshipExtractorService {
           lower.includes('epfl')
         );
       });
-      supervisorEmail = academicEmail || allEmails[0];
+      supervisorEmail = academicEmail || candidateList[0];
     }
 
     return { name: supervisorName, email: supervisorEmail };

@@ -30,9 +30,9 @@ async function main() {
     skills: ['Microgrids & EMS', 'Python (FastAPI, NumPy, SciPy)', 'Optimisation énergétique (DP, GA, PSO, LP)', 'Stockage par batteries (BESS)'],
     metadata: {
       isPdfOffer: true,
-      supervisorName: 'Dr. Stéphane Averty',
-      supervisorEmail: 'recrutement.liten@cea.fr',
-      contactEmail: 'recrutement.liten@cea.fr',
+      supervisorName: 'Dr. Yannick Veschetti',
+      supervisorEmail: 'yannick.veschetti@cea.fr',
+      contactEmail: 'yannick.veschetti@cea.fr',
       isDirectEmail: true,
     },
   };
@@ -52,7 +52,7 @@ async function main() {
   if (sent) {
     console.log('\n✅ SUCCÈS ! La carte interactive a été envoyée sur votre Telegram.');
     console.log('👉 Ouvrez votre Telegram et appuyez sur : [✅ Approuver & Envoyer à l\'Organisme]');
-    console.log('👉 Le bot en tâche de fond expédiera la candidature et vous recevrez la confirmation BCC !');
+    console.log('👉 Le bot expédiera la candidature directement au superviseur Dr. Yannick Veschetti !');
   } else {
     console.log('❌ Échec de l\'envoi Telegram. Vérifiez vos identifiants bot.');
   }

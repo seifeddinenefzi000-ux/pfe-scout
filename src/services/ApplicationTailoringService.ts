@@ -120,29 +120,33 @@ export class ApplicationTailoringService {
       if (candidateEmail) return candidateEmail;
     }
 
-    // 3. Known laboratory and company recruitment / internship directories
+    // 3. Known laboratory research directors & supervisor directory
     const companyLower = (offer.companyName || '').toLowerCase();
     const titleLower = (offer.title || '').toLowerCase();
 
-    const knownDirectory: Record<string, string> = {
-      'ines': 'recrutement.liten@cea.fr',
-      'cea': 'recrutement-etudiants@cea.fr',
-      'cnrs': 'stages-recherche@cnrs.fr',
-      'promes': 'contact@promes.cnrs.fr',
-      'epfl': 'pvlab@epfl.ch',
-      'sotulub': 'direction.technique@sotulub.com.tn',
-      'zenith': 'contact@zenith-solar.com',
-      'ctkcp': 'rh@ctkcp.com',
-      'edf': 'stages-recrutement@edf.fr',
-      'engie': 'carrieres.france@engie.com',
-      'total': 'carrieres@totalenergies.com',
-      'schneider': 'fr-carrieres@schneider-electric.com',
-      'renac': 'info@renac.de',
+    const knownSupervisorDirectory: Record<string, { name: string; email: string }> = {
+      'ines': { name: 'Dr. Yannick Veschetti', email: 'yannick.veschetti@cea.fr' },
+      'cea liten': { name: 'Dr. Yannick Veschetti', email: 'yannick.veschetti@cea.fr' },
+      'cea': { name: 'Dr. Yannick Veschetti', email: 'yannick.veschetti@cea.fr' },
+      'promes': { name: 'Dr. Stéphane Grieu', email: 'stephane.grieu@promes.cnrs.fr' },
+      'laplace': { name: 'Prof. Bruno Sareni', email: 'bruno.sareni@laplace.univ-tlse.fr' },
+      'g2elab': { name: 'Dr. Vincent Debusschere', email: 'vincent.debusschere@g2elab.grenoble-inp.fr' },
+      'femto': { name: 'Prof. Daniel Hissel', email: 'daniel.hissel@univ-fcomte.fr' },
+      'ipvf': { name: 'Dr. Pere Roca i Cabarrocas', email: 'pere.roca@polytechnique.edu' },
+      'polytechnique': { name: 'Dr. Pere Roca i Cabarrocas', email: 'pere.roca@polytechnique.edu' },
+      'epfl': { name: 'Dr. Elena Savicheva', email: 'elena.savicheva@epfl.ch' },
+      'sorbonne': { name: 'Prof. Mathieu Salanne', email: 'mathieu.salanne@sorbonne-universite.fr' },
+      'polymtl': { name: 'Prof. Jean Mahseredjian', email: 'jean.mahseredjian@polymtl.ca' },
+      'sotulub': { name: 'Direction Technique SOTULUB', email: 'direction.technique@sotulub.com.tn' },
+      'zenith': { name: 'Direction Zenith Solar', email: 'contact@zenith-solar.com' },
+      'ctkcp': { name: 'Ressources Humaines CTKCP', email: 'rh@ctkcp.com' },
     };
 
-    for (const [key, email] of Object.entries(knownDirectory)) {
+    for (const [key, sup] of Object.entries(knownSupervisorDirectory)) {
       if (companyLower.includes(key) || titleLower.includes(key)) {
-        return email;
+        if (!offer.metadata) offer.metadata = {};
+        if (!offer.metadata.supervisorName) offer.metadata.supervisorName = sup.name;
+        return sup.email;
       }
     }
 
@@ -302,8 +306,9 @@ ENIM (École Nationale d'Ingénieurs de Monastir) - Génie Énergétique
 seifeddinenefzi000@gmail.com
 linkedin.com/in/nefzi-seifeddine`;
     } else {
+      const salutationEn = supervisorName ? `Dear ${supervisorName},` : 'Dear Hiring Team,';
       subject = `Application - ${cleanTitle} - Seif Eddine Nefzi`;
-      emailBody = `Dear Hiring Team,
+      emailBody = `${salutationEn}
 
 I am applying for the ${cleanTitle} role at ${cleanCompany}. I am in my final year of the Engineering Degree in Energy Engineering (Renewable Energies track) at ENIM (National Engineering School of Monastir), alongside a Research Master's in Energy Systems Management, and I am available for 4 to 6 months from January 2027.
 
