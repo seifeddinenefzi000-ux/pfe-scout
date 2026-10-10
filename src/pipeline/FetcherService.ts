@@ -85,6 +85,23 @@ export class FetcherService {
       throw err;
     }
   }
+
+  async fetchBinary(url: string, timeoutMs = 20000): Promise<Uint8Array | null> {
+    try {
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+        timeout: timeoutMs,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Accept': 'application/pdf,*/*',
+        },
+      });
+      return new Uint8Array(response.data);
+    } catch (err) {
+      logger.warn(`Failed fetching binary from ${url}`, { error: String(err) });
+      return null;
+    }
+  }
 }
 
 export const fetcherService = new FetcherService();

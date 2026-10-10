@@ -106,6 +106,24 @@ export class RankingEngine {
         reasons.push('🏠 Flexible remote (+5)');
       }
 
+      // 4. Direct Email & Supervisor Contact Priority Boost (+40)
+      const hasDirectEmail = Boolean(
+        (item.metadata as any)?.isDirectEmail ||
+        (item.metadata as any)?.contactEmail ||
+        (item.applyUrl && (item.applyUrl.startsWith('mailto:') || item.applyUrl.includes('@')))
+      );
+      if (hasDirectEmail) {
+        overall += 40;
+        reasons.push('📨 Direct Supervisor/HR Email Contact (+40)');
+      }
+
+      // 5. Official Lab PFE PDF Sheet Priority Boost (+30)
+      const isPdfOffer = Boolean((item.metadata as any)?.isPdfOffer || item.applyUrl?.toLowerCase().endsWith('.pdf'));
+      if (isPdfOffer) {
+        overall += 30;
+        reasons.push('📄 Official Laboratory PDF Topic Sheet (+30)');
+      }
+
       item.companyScore = companyScore;
       item.growthScore = growthScore;
       item.deadlineScore = deadlineScore;

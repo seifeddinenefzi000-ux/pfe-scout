@@ -98,6 +98,14 @@ export class ApplicationTailoringService {
    * Resolve best direct contact email or application URL for a published offer
    */
   resolveOfferContact(offer: CanonicalInternship): string {
+    // 0. If already extracted from a laboratory PDF sheet or metadata
+    if (offer.metadata?.contactEmail && typeof offer.metadata.contactEmail === 'string' && offer.metadata.contactEmail.includes('@')) {
+      return offer.metadata.contactEmail;
+    }
+    if (offer.metadata?.supervisorEmail && typeof offer.metadata.supervisorEmail === 'string' && offer.metadata.supervisorEmail.includes('@')) {
+      return offer.metadata.supervisorEmail;
+    }
+
     // 1. Check if applyUrl is a direct mailto: link
     if (offer.applyUrl && offer.applyUrl.startsWith('mailto:')) {
       const email = offer.applyUrl.replace('mailto:', '').split('?')[0].trim();
@@ -253,12 +261,15 @@ export class ApplicationTailoringService {
 
     const draftId = offer.id || `offer_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
 
+    const supervisorName = (offer.metadata as any)?.supervisorName as string | undefined;
+
     // Generate customized LaTeX Cover Letter PDF
     const coverLetterResult = await latexCoverLetterService.generateCoverLetter({
       id: draftId,
       language,
       organization: cleanCompany,
       positionTitle: cleanTitle,
+      recipientTitle: supervisorName ? `À l'attention de ${supervisorName}` : undefined,
       cityCountry: offer.location || offer.country,
       topicText: offer.description,
       specificReason: cleanTitle,
@@ -269,8 +280,9 @@ export class ApplicationTailoringService {
     let emailBody = '';
 
     if (language === 'FR') {
+      const salutation = supervisorName ? `Bonjour ${supervisorName},` : 'Madame, Monsieur,';
       subject = `Candidature - ${cleanTitle} - Seif Eddine Nefzi`;
-      emailBody = `Madame, Monsieur,
+      emailBody = `${salutation}
 
 Je vous adresse ma candidature pour l'offre « ${cleanTitle} » chez ${cleanCompany}. Je suis en dernière année du cycle ingénieur en Génie Énergétique, spécialité Énergies Renouvelables, à l'ENIM (École Nationale d'Ingénieurs de Monastir), en parallèle d'un Master de recherche en Gestion des Systèmes Énergétiques, et je suis disponible pour 4 à 6 mois à partir de janvier 2027.
 

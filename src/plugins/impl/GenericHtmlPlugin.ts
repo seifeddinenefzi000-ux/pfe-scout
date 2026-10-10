@@ -4,6 +4,7 @@ import { fetcherService } from '../../pipeline/FetcherService.js';
 import { logger } from '../../utils/logger.js';
 import * as cheerio from 'cheerio';
 import Parser from 'rss-parser';
+import { pdfInternshipExtractorService } from '../../services/PdfInternshipExtractorService.js';
 
 export class GenericHtmlPlugin implements SourcePlugin {
   id = 'generic-html';
@@ -119,8 +120,71 @@ export class GenericHtmlPlugin implements SourcePlugin {
       }
     }
 
-    // 2. HTML Card & Article Extraction
+    // 2. Discover and parse any linked PFE Internship PDFs on the laboratory / portal page
     const defaultCompany = this.inferCompany(page.url, $('title').text());
+    const discoveredPdfUrls: string[] = [];
+
+    $('a[href]').each((_: number, el: any) => {
+      const href = $(el).attr('href') || '';
+      const anchorText = $(el).text().toLowerCase();
+      const hrefLower = href.toLowerCase();
+
+      const isPdf = hrefLower.includes('.pdf');
+      const isPfeRelated =
+        anchorText.includes('stage') ||
+        anchorText.includes('pfe') ||
+        anchorText.includes('sujet') ||
+        anchorText.includes('master') ||
+        anchorText.includes('offre') ||
+        hrefLower.includes('stage') ||
+        hrefLower.includes('pfe') ||
+        hrefLower.includes('sujet') ||
+        page.url.toLowerCase().includes('stage') ||
+        page.url.toLowerCase().includes('emploi');
+
+      if (isPdf && isPfeRelated) {
+        try {
+          const absoluteUrl = new URL(href, page.url).toString();
+          if (!discoveredPdfUrls.includes(absoluteUrl)) {
+            discoveredPdfUrls.push(absoluteUrl);
+          }
+        } catch {}
+      }
+    });
+
+    if (discoveredPdfUrls.length > 0) {
+      logger.info(`GenericHtmlPlugin: detected ${discoveredPdfUrls.length} potential PFE internship PDFs on ${page.url}`);
+      for (const pdfUrl of discoveredPdfUrls.slice(0, 6)) {
+        try {
+          const pdfBytes = await fetcherService.fetchBinary(pdfUrl);
+          if (pdfBytes) {
+            const extracted = await pdfInternshipExtractorService.extractFromBuffer(pdfBytes, pdfUrl, defaultCompany);
+            if (extracted) {
+              internships.push({
+                title: extracted.title,
+                companyName: extracted.organization || defaultCompany,
+                location: extracted.location,
+                description: extracted.description,
+                applyUrl: extracted.pdfUrl,
+                stipendText: 'Gratification légale (France)',
+                rawSkills: extracted.skills,
+                metadata: {
+                  isPdfOffer: true,
+                  supervisorName: extracted.supervisorName,
+                  supervisorEmail: extracted.supervisorEmail,
+                  isDirectEmail: extracted.isDirectEmail,
+                  contactEmail: extracted.supervisorEmail,
+                },
+              });
+            }
+          }
+        } catch (pdfErr) {
+          logger.warn(`GenericHtmlPlugin: error parsing PDF ${pdfUrl}`, { error: String(pdfErr) });
+        }
+      }
+    }
+
+    // 3. HTML Card & Article Extraction
 
     // Match standard job selectors AND WordPress articles, listings, cards
     const selectors = [

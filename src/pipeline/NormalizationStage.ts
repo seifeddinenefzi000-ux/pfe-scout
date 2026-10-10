@@ -75,6 +75,7 @@ export class NormalizationStage {
       skills: raw.rawSkills || [],
       status: 'NORMALIZED',
       confidenceScore: 1.0,
+      metadata: raw.metadata || {},
     };
   }
 

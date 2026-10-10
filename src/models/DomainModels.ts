@@ -40,6 +40,7 @@ export interface CanonicalInternship {
   deadline: string | null;
   skills: string[];
   status: 'DISCOVERED' | 'NORMALIZED' | 'ENRICHED' | 'MATCHED' | 'RANKED' | 'NOTIFIED' | 'ARCHIVED';
+  metadata?: Record<string, unknown>;
   
   // Granular Scores & Explanations
   resumeScore?: number;
