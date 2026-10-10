@@ -68,8 +68,12 @@ export class ResumeParserService {
         );
 
         if (!fs.existsSync(absPath)) {
-          logger.warn(`Resume file not found at ${absPath}, using default candidate profile for Seif Eddine Nefzi.`);
-          return this.getDefaultCandidateProfile();
+          const errorMsg =
+            `Resume file not found at ${absPath}`;
+
+          logger.error(`❌ ${errorMsg}`);
+
+          return this.getErrorResumeData(errorMsg);
         }
 
         fileBuffer = fs.readFileSync(absPath);

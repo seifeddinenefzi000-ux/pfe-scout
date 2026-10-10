@@ -76,6 +76,10 @@ export async function runProcessPipeline(payload: ProcessPipelinePayload) {
     // 5. RESUME PARSING
     // ------------------------------------------------------------
     let resume = await resumeParserService.parseResume(env.USER_RESUME_PATH);
+    if (!resume || !resume.isParsedSuccessfully || resume.skills.length === 0) {
+      logger.info('Using structured candidate profile for Seif Eddine Nefzi (ENIM Master 2 Énergétique).');
+      resume = resumeParserService.getDefaultCandidateProfile();
+    }
 
     // ------------------------------------------------------------
     // 6. MATCH EACH INTERNSHIP TO USER PROFILE
