@@ -104,7 +104,7 @@ export class GenericHtmlPlugin implements SourcePlugin {
               description: snippet,
               applyUrl: item.link,
               stipendText: 'Gratification légale (France)',
-              deadlineText: item.pubDate || 'Open',
+              deadlineText: 'Open',
               rawSkills: (item.categories || []).map(String),
             });
           }

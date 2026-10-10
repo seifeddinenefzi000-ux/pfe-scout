@@ -21,7 +21,7 @@ export const GLOBAL_ENERGY_SOURCES: SourceDefinition[] = [
     type: 'LABORATORY',
     category: 'SOLAR_PV',
     country: 'France',
-    url: 'https://www.ines-solaire.org/offres-emploi/',
+    url: 'https://www.ines-solaire.org/',
     location: 'Le Bourget-du-Lac (Savoie), France',
     pluginId: 'generic-html',
   },

@@ -68,12 +68,8 @@ export class ResumeParserService {
         );
 
         if (!fs.existsSync(absPath)) {
-          const errorMsg =
-            `Resume file not found at ${absPath}`;
-
-          logger.error(`❌ ${errorMsg}`);
-
-          return this.getErrorResumeData(errorMsg);
+          logger.warn(`Resume file not found at ${absPath}, using default candidate profile for Seif Eddine Nefzi.`);
+          return this.getDefaultCandidateProfile();
         }
 
         fileBuffer = fs.readFileSync(absPath);
@@ -500,6 +496,16 @@ export class ResumeParserService {
           completenessScore
         ),
     };
+  }
+
+  public getDefaultCandidateProfile(): ResumeData {
+    const raw = `Seif Eddine Nefzi
+Élève Ingénieur Génie Énergétique (3ème année) - École Nationale d'Ingénieurs de Monastir (ENIM)
+Master 2 Recherche en Énergétique
+Compétences : Énergies Renouvelables, Solaire PV, Photovoltaïque, Traqueur Solaire, Stockage d'Énergie, BESS, Batteries, STEP, Pompage-Turbinage, Stockage Mécanique, Volants d'inertie, CAES, Microgrids, Smart Grids, EMS, Onduleurs, Thermique, Échangeurs de chaleur, MATLAB, Simulink, Python, AutoCAD.
+Projets : Dimensionnement et commande d'un suiveur solaire PV à deux axes (ENIM), Modélisation et gestion de charge de stockage BESS pour microgrid autonome, Audits énergétiques et bilans thermiques industriels (SOTULUB).`;
+
+    return this.extractStructuredProfile(raw);
   }
 
   /*
